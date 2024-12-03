@@ -9,16 +9,10 @@
         "autoprefixer": "^10.4.20",
         "axios": "^1.7.4",
         "concurrently": "^9.0.1",
+        "flowbite": "^2.5.2",
         "laravel-vite-plugin": "^1.0",
         "postcss": "^8.4.47",
         "tailwindcss": "^3.4.13",
         "vite": "^5.0"
-    },
-    "dependencies": {
-        "@alpinejs/persist": "^3.12.0",
-        "alpinejs": "^3.10.3",
-        "apexcharts": "^3.36.3",
-        "flatpickr": "^4.6.13",
-        "jsvectormap": "^1.5.1"
     }
 }
