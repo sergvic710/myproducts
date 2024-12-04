@@ -15,8 +15,14 @@
 <body>
 @include('partipals.navbar')
 @include ('partipals.aside')
+
 <div class="p-4 sm:ml-64">
-    <div class="p-4 border-2 border-gray-200  rounded-lg dark:border-gray-700 mt-14">
+    <div class="mt-14">
+        <h1 class="font-bold text-2xl">
+        @yield('title')
+        </h1>
+    </div>
+    <div class="p-4 border-2 border-gray-200  rounded-lg dark:border-gray-700 mt-2">
         @yield('content')
     </div>
 </div>
