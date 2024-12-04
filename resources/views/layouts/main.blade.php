@@ -3,12 +3,11 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
     <title>Laravel</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet"/>
 
     <!-- Styles / Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -17,7 +16,9 @@
 @include('partipals.navbar')
 @include ('partipals.aside')
 <div class="p-4 sm:ml-64">
-@yield('content')
+    <div class="p-4 border-2 border-gray-200  rounded-lg dark:border-gray-700 mt-14">
+        @yield('content')
+    </div>
 </div>
 </body>
 </html>
