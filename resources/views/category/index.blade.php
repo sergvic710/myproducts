@@ -1,7 +1,4 @@
 @extends('layouts.main')
-@section('title')
-    {{ $title  }}
-@endsection
 @section('content')
     <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
         <div class="flex items-center justify-between flex-column md:flex-row flex-wrap space-y-4 md:space-y-0 py-4 bg-white dark:bg-gray-900">
