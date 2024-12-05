@@ -3,8 +3,9 @@
 namespace App\Http\Controllers\Unit;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\StoreUnitRequest;
-use App\Http\Requests\UpdateUnitRequest;
+use App\Http\Requests\Unit\StoreUnitRequest;
+use App\Http\Requests\Unit\UpdateUnitRequest;
+use App\Models\Category;
 use App\Models\Unit;
 
 class UnitController extends Controller
@@ -14,7 +15,11 @@ class UnitController extends Controller
      */
     public function index()
     {
-        //
+        $units = Unit::all();
+        return view('unit.index',[
+            'units' => $units,
+            'title' => 'Units'
+        ]);
     }
 
     /**
@@ -22,7 +27,9 @@ class UnitController extends Controller
      */
     public function create()
     {
-        //
+        return view('unit.create',[
+            'title' => 'Create Unit'
+        ]);
     }
 
     /**
@@ -30,7 +37,9 @@ class UnitController extends Controller
      */
     public function store(StoreUnitRequest $request)
     {
-        //
+        Unit::create($request->all());
+
+        return redirect()->route('unit.index')->with('success', 'Unit created successfully.');
     }
 
     /**
@@ -46,7 +55,10 @@ class UnitController extends Controller
      */
     public function edit(Unit $unit)
     {
-        //
+        return view('unit.edit', [
+            'unit' => $unit,
+            'title' => 'Edit Unit'
+        ]);
     }
 
     /**
@@ -54,7 +66,8 @@ class UnitController extends Controller
      */
     public function update(UpdateUnitRequest $request, Unit $unit)
     {
-        //
+        $unit->update($request->all());
+        return redirect()->route('unit.index')->with('success', 'Unit update successfully.');
     }
 
     /**
@@ -62,6 +75,7 @@ class UnitController extends Controller
      */
     public function destroy(Unit $unit)
     {
-        //
+        $unit->delete();
+        return redirect()->route('unit.index')->with('success', 'Unit destroy successfully.');
     }
 }
