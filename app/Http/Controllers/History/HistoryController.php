@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\History;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\StoreHistoryRequest;
-use App\Http\Requests\UpdateHistoryRequest;
+use App\Http\Requests\History\StoreHistoryRequest;
+use App\Http\Requests\History\UpdateHistoryRequest;
 use App\Models\History;
+use App\Models\Product;
+use App\Models\Shop;
 
 class HistoryController extends Controller
 {
@@ -14,7 +16,11 @@ class HistoryController extends Controller
      */
     public function index()
     {
-        //
+        $histories = History::all();
+        return view('history.index',[
+            'histories' => $histories,
+            'title' => 'Histories'
+        ]);
     }
 
     /**
@@ -22,7 +28,13 @@ class HistoryController extends Controller
      */
     public function create()
     {
-        //
+        $shops = Shop::all();
+        $products = Product::all();
+        return view('history.create',[
+            'shops' => $shops,
+            'products' => $products,
+            'title' => 'Buy the product'
+        ]);
     }
 
     /**
@@ -30,7 +42,9 @@ class HistoryController extends Controller
      */
     public function store(StoreHistoryRequest $request)
     {
-        //
+        Shop::create($request->all());
+
+        return redirect()->route('history.index')->with('success', 'Buy created successfully.');
     }
 
     /**
@@ -46,7 +60,11 @@ class HistoryController extends Controller
      */
     public function edit(History $history)
     {
-        //
+        $shops = Shop::all();
+        return view('history.edit', [
+            'shops' => $shops,
+            'title' => 'Edit buy'
+        ]);
     }
 
     /**
@@ -54,7 +72,8 @@ class HistoryController extends Controller
      */
     public function update(UpdateHistoryRequest $request, History $history)
     {
-        //
+        $history->update($request->all());
+        return redirect()->route('history.index')->with('success', 'Buy created successfully.');
     }
 
     /**
@@ -62,6 +81,7 @@ class HistoryController extends Controller
      */
     public function destroy(History $history)
     {
-        //
+        $history->delete();
+        return redirect()->route('history.index')->with('success', 'Buy created successfully.');
     }
 }
