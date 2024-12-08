@@ -1,4 +1,4 @@
 @extends('layouts.main')
 @section('content')
-    @include('category._form', ['category' => $category, 'route' => route('category.update', $category->id), 'method' => 'PUT'])
+    @include('product._form', ['product' => $product, 'route' => route('product.update', $product->id), 'method' => 'PUT'])
 @endsection

@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Product;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\StoreProductRequest;
-use App\Http\Requests\UpdateProductRequest;
+use App\Http\Requests\Product\StoreProductRequest;
+use App\Http\Requests\Product\UpdateProductRequest;
+use App\Models\Category;
 use App\Models\Product;
+use App\Models\Unit;
 
 class ProductController extends Controller
 {
@@ -14,9 +16,10 @@ class ProductController extends Controller
      */
     public function index()
     {
-        $category = Product::all();
+        $products = Product::all();
         return view('product.index',[
-            'products' => $category
+            'products' => $products,
+            'title' => 'Products'
         ]);
     }
 
@@ -25,7 +28,13 @@ class ProductController extends Controller
      */
     public function create()
     {
-        //
+        $units = Unit::all();
+        $categories = Category::all();
+        return view('product.create', [
+            'units' => $units,
+            'categories' => $categories,
+            'title' => 'Create Product'
+        ]);
     }
 
     /**
@@ -33,7 +42,9 @@ class ProductController extends Controller
      */
     public function store(StoreProductRequest $request)
     {
-        //
+        Product::create($request->all());
+
+        return redirect()->route('product.index')->with('success', 'Product created successfully.');
     }
 
     /**
@@ -41,7 +52,7 @@ class ProductController extends Controller
      */
     public function show(Product $product)
     {
-        //
+
     }
 
     /**
@@ -49,7 +60,14 @@ class ProductController extends Controller
      */
     public function edit(Product $product)
     {
-        //
+        $units = Unit::all();
+        $categories = Category::all();
+        return view('product.edit', [
+            'product' => $product,
+            'units' => $units,
+            'categories' => $categories,
+            'title' => 'Edit Product'
+        ]);
     }
 
     /**
@@ -57,7 +75,8 @@ class ProductController extends Controller
      */
     public function update(UpdateProductRequest $request, Product $product)
     {
-        //
+        $product->update($request->all());
+        return redirect()->route('product.index')->with('success', 'Product update successfully.');
     }
 
     /**
@@ -65,6 +84,7 @@ class ProductController extends Controller
      */
     public function destroy(Product $product)
     {
-        //
+        $product->delete();
+        return redirect()->route('product.index')->with('success', 'Product destroy successfully.');
     }
 }

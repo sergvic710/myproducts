@@ -3,7 +3,7 @@
     <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
         <div class="flex items-center justify-between flex-column md:flex-row flex-wrap space-y-4 md:space-y-0 py-4 bg-white dark:bg-gray-900">
             <div>
-                <a href="{{ route('category.create') }}" class="text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800">Add</a>
+                <a href="{{ route('product.create') }}" class="text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800">Add</a>
                 <button id="dropdownActionButton" data-dropdown-toggle="dropdownAction" class="inline-flex items-center text-gray-500 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-3 py-1.5 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700" type="button">
                     <span class="sr-only">Action button</span>
                     Action
@@ -51,11 +51,20 @@
                 <th scope="col" class="px-6 py-3">
                     Name
                 </th>
+                <th scope="col" class="px-6 py-3">
+                    Category
+                </th>
+                <th scope="col" class="px-6 py-3">
+                    Unit
+                </th>
+                <th scope="col" class="px-6 py-3">
+                    For
+                </th>
                 <th></th>
             </tr>
             </thead>
             <tbody>
-            @foreach($categories as $category)
+            @foreach($products as $item)
                 <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                     {{--                <td class="w-4 p-4">--}}
                     {{--                    <div class="flex items-center">--}}
@@ -66,16 +75,25 @@
                     <th scope="row" class="flex items-center px-6 py-4 text-gray-900 whitespace-nowrap dark:text-white">
                         <img class="w-10 h-10 rounded-full" src="/docs/images/people/profile-picture-1.jpg" alt="Jese image">
                         <div class="ps-3">
-                            <div class="text-base font-semibold">{{ $category->name }}</div>
+                            <div class="text-base font-semibold">{{ $item->name }}</div>
                             <div class="font-normal text-gray-500"></div>
                         </div>
                     </th>
                     <td class="px-6 py-4">
+                        {{ $item->category->name }}
+                    </td>
+                    <td class="px-6 py-4">
+                        {{ $item->unit->name }}
+                    </td>
+                    <td class="px-6 py-4">
+                        {{ $item->count}}
+                    </td>
+                    <td class="px-6 py-4">
                         <div class="inline-flex rounded-md shadow-sm">
                             <!-- Modal toggle -->
                             {{--                        <a href="#" type="button" data-modal-target="editUserModal" data-modal-show="editUserModal" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</a>--}}
-                            <a href="{{ route('category.edit', $category->id) }}" class="text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800">Edit</a>
-                            <form method="POST" action="{{ route('category.destroy', $category->id) }}">
+                            <a href="{{ route('product.edit', $item->id) }}" class="text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800">Edit</a>
+                            <form method="POST" action="{{ route('product.destroy', $item->id) }}">
                                 {{ csrf_field() }}
                                 {{ method_field('DELETE') }}
                                 <button type="submit" class="text-red-700 hover:text-white border border-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800">Remove</button>
