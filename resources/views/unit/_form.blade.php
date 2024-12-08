@@ -1,4 +1,3 @@
-<h1> Add category</h1>
 <form class="max-w-md mx-auto" method="post" action="{{ $route }}">
     @csrf
     <input type="hidden" name="_method" value="{{ $method }}">
