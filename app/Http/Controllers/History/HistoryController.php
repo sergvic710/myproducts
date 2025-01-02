@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\History;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\History\ImportHistoryRequest;
 use App\Http\Requests\History\StoreHistoryRequest;
 use App\Http\Requests\History\UpdateHistoryRequest;
 use App\Models\History;
 use App\Models\Product;
 use App\Models\Shop;
+use App\Services\ImportHistoryService;
 use Illuminate\Support\Facades\Date;
 
 class HistoryController extends Controller
@@ -98,4 +100,23 @@ class HistoryController extends Controller
         $history->delete();
         return redirect()->route('history.index')->with('success', 'Buy created successfully.');
     }
+
+    public function importView()
+    {
+        $shops = Shop::all();
+        return view('history.import',[
+            'shops' => $shops
+        ]);
+    }
+
+    public function import(ImportHistoryRequest $import)
+    {
+        $filePath = $import->file('file')->path();
+
+        ImportHistoryService::import($import->shop_id, $filePath);
+
+//        $history->delete();
+        return redirect()->route('history.index')->with('success', ' Import successfully.');
+    }
+
 }

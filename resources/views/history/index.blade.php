@@ -15,14 +15,14 @@
                 <div id="dropdownAction" class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700 dark:divide-gray-600">
                     <ul class="py-1 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownActionButton">
                         <li>
-                            <a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Add</a>
+                            <a href="{{ route('history.import') }}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Import</a>
                         </li>
-                        <li>
-                            <a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Promote</a>
-                        </li>
-                        <li>
-                            <a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Activate account</a>
-                        </li>
+{{--                        <li>--}}
+{{--                            <a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Promote</a>--}}
+{{--                        </li>--}}
+{{--                        <li>--}}
+{{--                            <a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Activate account</a>--}}
+{{--                        </li>--}}
                     </ul>
                     <div class="py-1">
                         <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Delete User</a>
@@ -60,6 +60,9 @@
                 <th scope="col" class="px-6 py-3">
                     Amount
                 </th>
+                <th scope="col" class="px-6 py-3">
+                    Total
+                </th>
                 <th></th>
             </tr>
             </thead>
@@ -73,7 +76,7 @@
                     {{--                    </div>--}}
                     {{--                </td>--}}
                     <td class="px-6 py-4">
-                        {{ $item->date }}
+                        {{ \Carbon\Carbon::parse($item->date)->format('d.m.Y') }}
                     </td>
                     </td>
                     <td class="px-6 py-4">
@@ -83,7 +86,10 @@
                         {{ $item->product->name }}
                     </td>
                     <td class="px-6 py-4">
-                        {{ $item->amount}}
+                        {{ $item->amount}}  {{ $item->product->unit->name }}
+                    </td>
+                    <td class="px-6 py-4">
+                        {{ $item->total}} €
                     </td>
                     <td class="px-6 py-4">
                         <div class="inline-flex rounded-md shadow-sm">
