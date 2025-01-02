@@ -4,11 +4,13 @@ namespace App\Http\Controllers\History;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\History\ImportHistoryRequest;
+use App\Http\Requests\History\SearchHistoryRequest;
 use App\Http\Requests\History\StoreHistoryRequest;
 use App\Http\Requests\History\UpdateHistoryRequest;
 use App\Models\History;
 use App\Models\Product;
 use App\Models\Shop;
+use App\Repositories\ProductRepository;
 use App\Services\ImportHistoryService;
 use Illuminate\Support\Facades\Date;
 
@@ -19,9 +21,27 @@ class HistoryController extends Controller
      */
     public function index()
     {
-        $histories = History::all();
+        $histories = History::orderBy('date', 'desc')->get();
+        $products = ProductRepository::getAllProducts();
         return view('history.index',[
             'histories' => $histories,
+            'products' => $products,
+            'title' => 'Histories'
+        ]);
+    }
+
+    public function search(SearchHistoryRequest $request)
+    {
+        if( $request->product_id) {
+            $histories = History::where('product_id', $request->product_id)
+                ->orderBy('date', 'desc')
+                ->get();
+        }
+        $products = ProductRepository::getAllProducts();
+        return view('history.index',[
+            'histories' => $histories,
+            'products' => $products,
+            'product_id' => $request->product_id,
             'title' => 'Histories'
         ]);
     }

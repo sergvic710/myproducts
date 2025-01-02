@@ -38,6 +38,7 @@ class ImportHistoryService
                 }
                 $amount = 1;
                 $unit = 'kpl';
+                $priceUnit = $price;
                 $res = preg_match_all('/^\s*(\d+(?:\,\d+)?)\s*KG\s*(\d+(?:\,\d+)?)\s*€\/KG/', $data[$i+1][1], $matches, PREG_SET_ORDER, 0);
                 if( $res && isset($matches[0][1]) && isset($matches[0][2])) {
                     $amount = (float)str_replace(',', '.', $matches[0][1]);
@@ -55,8 +56,8 @@ class ImportHistoryService
                 $item = [
                     'name' => $name,
                     'price' => $price,
-                    'amount' => $amount ?? null,
-                    'priceUnit' => $priceUnit ?? null,
+                    'amount' => $amount,
+                    'priceUnit' => $priceUnit,
                     'unit' => $unit
                 ];
                 $cart['products'][] = $item;

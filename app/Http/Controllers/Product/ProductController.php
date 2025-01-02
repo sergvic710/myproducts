@@ -8,6 +8,7 @@ use App\Http\Requests\Product\UpdateProductRequest;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Unit;
+use App\Repositories\ProductRepository;
 
 class ProductController extends Controller
 {
@@ -16,7 +17,7 @@ class ProductController extends Controller
      */
     public function index()
     {
-        $products = Product::all();
+        $products = ProductRepository::getAllProducts();
         return view('product.index',[
             'products' => $products,
             'title' => 'Products'

@@ -12,6 +12,9 @@ use Illuminate\Support\Facades\Date;
 class ProductRepository
 {
 
+    public static function getAllProducts() {
+        return Product::orderBy('name', 'asc')->get();
+    }
     public static function productsSave( array $cart)
     {
         foreach ($cart['products'] as $item) {
