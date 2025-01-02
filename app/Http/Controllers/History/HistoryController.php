@@ -8,6 +8,7 @@ use App\Http\Requests\History\UpdateHistoryRequest;
 use App\Models\History;
 use App\Models\Product;
 use App\Models\Shop;
+use Illuminate\Support\Facades\Date;
 
 class HistoryController extends Controller
 {
@@ -42,7 +43,12 @@ class HistoryController extends Controller
      */
     public function store(StoreHistoryRequest $request)
     {
-        Shop::create($request->all());
+        $data = $request->all();
+        if( !empty($data['date']) ) {
+            $data['date'] = Date::parse($data['date'])->format('Y-m-d');
+        }
+
+        History::create($data);
 
         return redirect()->route('history.index')->with('success', 'Buy created successfully.');
     }
@@ -61,9 +67,13 @@ class HistoryController extends Controller
     public function edit(History $history)
     {
         $shops = Shop::all();
+        $products = Product::all();
+        $date = Date::parse($history->date)->format('m/d/Y');
         return view('history.edit', [
+            'history' => $history,
             'shops' => $shops,
-            'title' => 'Edit buy'
+            'title' => 'Edit buy',
+            'products' => $products
         ]);
     }
 
@@ -72,7 +82,11 @@ class HistoryController extends Controller
      */
     public function update(UpdateHistoryRequest $request, History $history)
     {
-        $history->update($request->all());
+        $data = $request->all();
+        if( !empty($data['date']) ) {
+            $data['date'] = Date::parse($data['date'])->format('Y-m-d');
+        }
+        $history->update($data);
         return redirect()->route('history.index')->with('success', 'Buy created successfully.');
     }
 

@@ -12,6 +12,7 @@
     <!-- Styles / Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @stack('scripts')
 </head>
 <body>
 @include('partipals.navbar')

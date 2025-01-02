@@ -23,8 +23,9 @@ class StoreHistoryRequest extends FormRequest
     {
         return [
             'product_id' => 'required|exists:products,id',
-            'amount' => 'required|integer',
-            'price' => 'required|numeric',
+            'amount' => 'required|decimal:0,3',
+            'price' => 'required|decimal:0,3',
+            'total' => 'required|decimal:0,3',
             'date' => 'required|date',
             'shop_id' => 'required|exists:shops,id',
         ];

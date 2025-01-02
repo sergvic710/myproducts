@@ -49,16 +49,16 @@
                 {{--                    </div>--}}
                 {{--                </th>--}}
                 <th scope="col" class="px-6 py-3">
-                    Name
+                    Date
                 </th>
                 <th scope="col" class="px-6 py-3">
-                    Category
+                    Shop
                 </th>
                 <th scope="col" class="px-6 py-3">
-                    Unit
+                    Product
                 </th>
                 <th scope="col" class="px-6 py-3">
-                    For
+                    Amount
                 </th>
                 <th></th>
             </tr>
@@ -72,28 +72,25 @@
                     {{--                        <label for="checkbox-table-search-1" class="sr-only">checkbox</label>--}}
                     {{--                    </div>--}}
                     {{--                </td>--}}
-                    <th scope="row" class="flex items-center px-6 py-4 text-gray-900 whitespace-nowrap dark:text-white">
-                        <img class="w-10 h-10 rounded-full" src="/docs/images/people/profile-picture-1.jpg" alt="Jese image">
-                        <div class="ps-3">
-                            <div class="text-base font-semibold">{{ $item->name }}</div>
-                            <div class="font-normal text-gray-500"></div>
-                        </div>
-                    </th>
                     <td class="px-6 py-4">
-                        {{ $item->category->name }}
+                        {{ $item->date }}
+                    </td>
                     </td>
                     <td class="px-6 py-4">
-                        {{ $item->unit->name }}
+                        {{ $item->shop->name }}
                     </td>
                     <td class="px-6 py-4">
-                        {{ $item->count}}
+                        {{ $item->product->name }}
+                    </td>
+                    <td class="px-6 py-4">
+                        {{ $item->amount}}
                     </td>
                     <td class="px-6 py-4">
                         <div class="inline-flex rounded-md shadow-sm">
                             <!-- Modal toggle -->
                             {{--                        <a href="#" type="button" data-modal-target="editUserModal" data-modal-show="editUserModal" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</a>--}}
                             <a href="{{ route('history.edit', $item->id) }}" class="text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800">Edit</a>
-                            <form method="POST" action="{{ route('product.destroy', $item->id) }}">
+                            <form method="POST" action="{{ route('history.destroy', $item->id) }}">
                                 {{ csrf_field() }}
                                 {{ method_field('DELETE') }}
                                 <button type="submit" class="text-red-700 hover:text-white border border-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800">Remove</button>

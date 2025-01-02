@@ -16,9 +16,15 @@ class History extends Model
         'price',
         'amount',
         'total',
+        'date',
     ];
     public function product() : \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->BelongsTo(Product::class);
     }
+    public function shop() : \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->BelongsTo(Shop::class);
+    }
+
 }
