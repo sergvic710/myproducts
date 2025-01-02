@@ -64,7 +64,8 @@
                     {{--                    </div>--}}
                     {{--                </td>--}}
                     <th scope="row" class="flex items-center px-6 py-4 text-gray-900 whitespace-nowrap dark:text-white">
-                        <img class="w-10 h-10 rounded-full" src="/docs/images/people/profile-picture-1.jpg" alt="Jese image">
+{{--                        @dump($category->getMedia('image')[0]->getUrl());--}}
+                        <img class="w-10 h-10 rounded-full" src="{{$category->getMedia('image')[0]->getUrl()}}" alt="">
                         <div class="ps-3">
                             <div class="text-base font-semibold">{{ $category->name }}</div>
                             <div class="font-normal text-gray-500"></div>

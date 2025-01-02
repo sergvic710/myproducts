@@ -37,7 +37,11 @@ class CategoryController extends Controller
      */
     public function store(StoreCategoryRequest $request)
     {
-        Category::create($request->all());
+        $category = Category::create($request->all());
+        $category->clearMediaCollection('image');
+        $category
+            ->addMedia($request->image)
+            ->toMediaCollection('image');
 
         return redirect()->route('category.index')->with('success', 'Product created successfully.');
     }
@@ -75,6 +79,10 @@ class CategoryController extends Controller
     public function update(UpdateCategoryRequest $request, Category $category)
     {
         $category->update($request->all());
+        $category->clearMediaCollection('image');
+       $category
+           ->addMedia($request->image)
+           ->toMediaCollection('image');
         return redirect()->route('category.index')->with('success', 'Product created successfully.');
     }
 
