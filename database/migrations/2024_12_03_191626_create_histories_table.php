@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('histories', function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
-            $table->unsignedInteger('amount')->default(0);
+            $table->float('amount',2)->default(0);
             $table->float('price',2)->default(0);
             $table->unsignedSmallInteger('is_discount')->default(0);
             $table->float('discount_price',2)->default(0);
