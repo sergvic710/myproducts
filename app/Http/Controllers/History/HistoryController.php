@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\History;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\History\ChartHistoryRequest;
 use App\Http\Requests\History\ImportHistoryRequest;
 use App\Http\Requests\History\SearchHistoryRequest;
 use App\Http\Requests\History\StoreHistoryRequest;
@@ -137,6 +138,25 @@ class HistoryController extends Controller
 
 //        $history->delete();
         return redirect()->route('history.index')->with('success', ' Import successfully.');
+    }
+
+    public function chart(ChartHistoryRequest $request)
+    {
+        $products = ProductRepository::getAllProducts();
+        if( $request->product_id) {
+            $histories = History::where('product_id', $request->product_id)
+                ->orderBy('date', 'desc')
+                ->get();
+
+            return view('history.chart',[
+                'dates' => $histories->pluck('date'),
+                'priceValues' => $histories->pluck('price'),
+                'products' => $products
+            ]);
+        }
+        return view('history.chart',[
+            'products' => $products
+        ]);
     }
 
 }
