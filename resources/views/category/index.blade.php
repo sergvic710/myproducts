@@ -65,7 +65,9 @@
                     {{--                </td>--}}
                     <th scope="row" class="flex items-center px-6 py-4 text-gray-900 whitespace-nowrap dark:text-white">
 {{--                        @dump($category->getMedia('image')[0]->getUrl());--}}
-                        <img class="w-10 h-10 rounded-full" src="{{$category->getMedia('image')[0]->getUrl()}}" alt="">
+                        @if( $category->getMedia('image')->count() != 0 )
+                            <img class="w-10 h-10 rounded-full" src="{{$category->getMedia('image')[0]->getUrl()}}" alt="">
+                        @endif
                         <div class="ps-3">
                             <div class="text-base font-semibold">{{ $category->name }}</div>
                             <div class="font-normal text-gray-500"></div>
