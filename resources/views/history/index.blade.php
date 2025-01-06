@@ -17,12 +17,12 @@
                         <li>
                             <a href="{{ route('history.import') }}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Import</a>
                         </li>
-{{--                        <li>--}}
-{{--                            <a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Promote</a>--}}
-{{--                        </li>--}}
-{{--                        <li>--}}
-{{--                            <a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Activate account</a>--}}
-{{--                        </li>--}}
+                        {{--                        <li>--}}
+                        {{--                            <a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Promote</a>--}}
+                        {{--                        </li>--}}
+                        {{--                        <li>--}}
+                        {{--                            <a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Activate account</a>--}}
+                        {{--                        </li>--}}
                     </ul>
                     <div class="py-1">
                         <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Delete User</a>
@@ -30,15 +30,15 @@
                 </div>
             </div>
 
-{{--            <label for="table-search" class="sr-only">Search</label>--}}
-{{--            <div class="relative">--}}
-{{--                <div class="absolute inset-y-0 rtl:inset-r-0 start-0 flex items-center ps-3 pointer-events-none">--}}
-{{--                    <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">--}}
-{{--                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>--}}
-{{--                    </svg>--}}
-{{--                </div>--}}
-{{--                <input type="text" id="table-search-users" class="block pt-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg w-80 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Search for users">--}}
-{{--            </div>--}}
+            {{--            <label for="table-search" class="sr-only">Search</label>--}}
+            {{--            <div class="relative">--}}
+            {{--                <div class="absolute inset-y-0 rtl:inset-r-0 start-0 flex items-center ps-3 pointer-events-none">--}}
+            {{--                    <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">--}}
+            {{--                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>--}}
+            {{--                    </svg>--}}
+            {{--                </div>--}}
+            {{--                <input type="text" id="table-search-users" class="block pt-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg w-80 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Search for users">--}}
+            {{--            </div>--}}
         </div>
         <form class="max-w-md mx-auto" method="post" action="{{ route('history.search') }}">
             @csrf
@@ -50,7 +50,7 @@
                             @if( isset($product_id)  )
                                 <option value="{{ $item->id }}" {{ ($product_id == $item->id) ? 'selected' : '' }}> {{ $item->name }}</option>
                             @else
-                                <option value="{{ $item->id }}"> {{ $item->name }} &nbsp; for {{ $item->count }}</option>
+                                <option value="{{ $item->id }}"> {{ $item->name }}</option>
                             @endif
                         @endforeach
                     </select>
@@ -95,23 +95,23 @@
                     {{--                        <label for="checkbox-table-search-1" class="sr-only">checkbox</label>--}}
                     {{--                    </div>--}}
                     {{--                </td>--}}
-                    <td class="px-6 py-4">
+                    <td class="px-6 py-1">
                         {{ \Carbon\Carbon::parse($item->date)->format('d.m.Y') }}
                     </td>
                     </td>
-                    <td class="px-6 py-4">
+                    <td class="px-6 py-1">
                         {{ $item->shop->name }}
                     </td>
-                    <td class="px-6 py-4">
+                    <td class="px-6 py-1">
                         {{ $item->product->name }}
                     </td>
-                    <td class="px-6 py-4">
+                    <td class="px-6 py-1">
                         {{ $item->amount}}  {{ $item->product->unit->name }}
                     </td>
-                    <td class="px-6 py-4">
+                    <td class="px-6 py-1">
                         {{ $item->total}} €
                     </td>
-                    <td class="px-6 py-4">
+                    <td class="px-6 py-1">
                         <div class="inline-flex rounded-md shadow-sm">
                             <!-- Modal toggle -->
                             {{--                        <a href="#" type="button" data-modal-target="editUserModal" data-modal-show="editUserModal" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</a>--}}
@@ -127,6 +127,9 @@
             @endforeach
             </tbody>
         </table>
+        <div class="my-2 mx-auto w-full flex justify-center relative items-center">
+            {{ $histories->links() }}
+        </div>
 
         <!-- Edit user modal -->
         <div id="editUserModal" tabindex="-1" aria-hidden="true" class="fixed top-0 left-0 right-0 z-50 items-center justify-center hidden w-full p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-[calc(100%-1rem)] max-h-full">
@@ -147,7 +150,7 @@
                     </div>
                     <!-- Modal body -->
                     <div class="p-6 space-y-6">
-{{--                        @include('category._form')--}}
+                        {{--                        @include('category._form')--}}
                         {{--                        <div class="grid grid-cols-6 gap-6">--}}
                         {{--                            <div class="col-span-6 sm:col-span-3">--}}
                         {{--                                <label for="first-name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">First Name</label>--}}

@@ -17,35 +17,20 @@
                 @endforeach
             </select>
         </div>
-        <button type="submit" class="mt-3 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">Save</button>
+        <button type="submit" class="mt-3 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">Send</button>
     </form>
     @if( isset($dates))
-    <div>
-        <canvas id="priceChart" width="400" height="200"></canvas>
+    <div style="height: 400px;">
+        <canvas id="priceChart"></canvas>
     </div>
 
     <script>
-        const ctx = document.getElementById('priceChart').getContext('2d');
-        const chart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: {!! json_encode($dates) !!},
-                datasets: [{
-                    label: 'Price',
-                    data: {!! json_encode($priceValues) !!},
-                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
+        let dates = {!! json_encode($dates) !!};
+        let priceValues = {!! json_encode($priceValues) !!};
     </script>
     @endif
 @endsection
+@push('scripts')
+    @vite(['resources/js/chart.js'])
+@endpush
+

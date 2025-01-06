@@ -22,7 +22,7 @@ class HistoryController extends Controller
      */
     public function index()
     {
-        $histories = History::orderBy('date', 'desc')->get();
+        $histories = History::orderBy('date', 'desc')->paginate(15);
         $products = ProductRepository::getAllProducts();
         return view('history.index',[
             'histories' => $histories,
@@ -36,7 +36,7 @@ class HistoryController extends Controller
         if( $request->product_id) {
             $histories = History::where('product_id', $request->product_id)
                 ->orderBy('date', 'desc')
-                ->get();
+                ->paginate(15);
         }
         $products = ProductRepository::getAllProducts();
         return view('history.index',[
