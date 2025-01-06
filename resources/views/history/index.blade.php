@@ -102,9 +102,18 @@
                     <td class="px-6 py-1">
                         {{ $item->shop->name }}
                     </td>
-                    <td class="px-6 py-1">
-                        {{ $item->product->name }}
-                    </td>
+                    <th scope="row" class="flex items-center px-6 py-4 whitespace-nowrap dark:text-white">
+                        @if( $item->product->getMedia('image')->count() != 0 )
+                            <img class="w-10 h-10 rounded-full" src="{{$item->product->getMedia('image')[0]->getUrl()}}" alt="">
+                        @endif
+                        <div class="ps-3">
+                            <div class="text-base">{{ $item->product->name }}</div>
+                            <div class="font-normal text-gray-500"></div>
+                        </div>
+                    </th>
+{{--                    <td class="px-6 py-1">--}}
+{{--                        {{ $item->product->name }}--}}
+{{--                    </td>--}}
                     <td class="px-6 py-1">
                         {{ $item->amount}}  {{ $item->product->unit->name }}
                     </td>
