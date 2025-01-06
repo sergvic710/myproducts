@@ -1,9 +1,14 @@
 {{--@dump($product ?? '')--}}
 {{--@dump($errors ?? '')--}}
-<form class="max-w-md mx-auto" method="post" action="{{ $route }}">
+<form class="max-w-md mx-auto" method="post" action="{{ $route }}" enctype="multipart/form-data">
     @csrf
     <input type="hidden" name="_method" value="{{ $method }}">
     <div class="relative z-0 w-full mb-5 group">
+        <div class="mb-6 relative">
+            <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white" for="image">Image</label>
+            <input class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" id="image" type="file" name="image">
+        </div>
+
         <div class="mb-6 relative">
             <input type="text" name="name" id="name" class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer" placeholder=" " required value="{{ $product->name ?? '' }}"/>
             <label for="name" class="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:start-0 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Name</label>

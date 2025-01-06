@@ -43,7 +43,13 @@ class ProductController extends Controller
      */
     public function store(StoreProductRequest $request)
     {
-        Product::create($request->all());
+        $product = Product::create($request->all());
+        $product->clearMediaCollection('image');
+        if( $request->image ) {
+            $product
+                ->addMedia($request->image)
+                ->toMediaCollection('image');
+        }
 
         return redirect()->route('product.index')->with('success', 'Product created successfully.');
     }
@@ -77,6 +83,12 @@ class ProductController extends Controller
     public function update(UpdateProductRequest $request, Product $product)
     {
         $product->update($request->all());
+        $product->clearMediaCollection('image');
+        if( $request->image ) {
+            $product
+                ->addMedia($request->image)
+                ->toMediaCollection('image');
+        }
         return redirect()->route('product.index')->with('success', 'Product update successfully.');
     }
 
