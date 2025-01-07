@@ -1,0 +1,40 @@
+version: "3"
+services:
+    www:
+        build: .
+        ports:
+            - "80:80"
+        volumes:
+            - ./:/var/www/html
+            - ./php-custom.ini:/usr/local/etc/php/conf.d/custom.ini
+            - ./php-xdebug.ini:/usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
+        environment:
+            PHP_IDE_CONFIG: "serverName=groceries"
+#        links:
+#            - db
+        networks:
+            - default
+    db:
+#        platform: linux/x86_64
+        image: mariadb:10
+        ports:
+            - "3306:3306"
+        environment:
+            MARIADB_DATABASE: groceries
+            MARIADB_USER: superuser
+            MARIADB_PASSWORD: SuperUser
+            MARIADB_ROOT_PASSWORD: SuperUser
+        volumes:
+            - ./docker/db:/var/lib/mysql
+        networks:
+            - default
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+#        links:
+#            - db:db
+        ports:
+            - 8080:80
+        environment:
+            MYSQL_USER: superuser
+            MYSQL_PASSWORD: SuperUser
+            MYSQL_ROOT_PASSWORD: SuperUser
