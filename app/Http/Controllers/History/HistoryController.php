@@ -53,7 +53,7 @@ class HistoryController extends Controller
     public function create()
     {
         $shops = Shop::all();
-        $products = Product::all();
+        $products = ProductRepository::getAllProducts();
         return view('history.create',[
             'shops' => $shops,
             'products' => $products,
