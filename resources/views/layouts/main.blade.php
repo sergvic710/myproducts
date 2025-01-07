@@ -26,7 +26,7 @@
             {{ $title ?? '' }}
         </h1>
     </div>
-    <div class="p-4 border-2 border-gray-200  rounded-lg dark:border-gray-700 mt-2">
+    <div class="p-4 border-2 border-gray-200  rounded-lg mt-2">
         @yield('content')
     </div>
 </div>
