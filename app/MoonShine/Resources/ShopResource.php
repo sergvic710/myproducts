@@ -22,6 +22,7 @@ class ShopResource extends ModelResource
     protected string $model = Shop::class;
 
     protected string $title = 'Shops';
+    protected string $column = 'name';
 
     /**
      * @return list<Page>

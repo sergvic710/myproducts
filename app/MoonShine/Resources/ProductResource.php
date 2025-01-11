@@ -25,6 +25,8 @@ class ProductResource extends ModelResource
 
     protected string $title = 'Products';
 
+    protected string $column = 'name';
+
     /**
      * @return list<Page>
      */
@@ -40,7 +42,6 @@ class ProductResource extends ModelResource
     protected function indexFields(): iterable
     {
         return [
-            Image::make('image'),
             BelongsTo::make(
                 'Category',
                 'category',
@@ -61,7 +62,19 @@ class ProductResource extends ModelResource
         return [
             Image::make('image')
                 ->dir('products'),
+            BelongsTo::make(
+                'Category',
+                'category',
+                resource: CategoryResource::class
+            )
+            ->searchable(),
             Text::make('Name'),
+            Text::make('Count'),
+            BelongsTo::make(
+                'Unit',
+                'unit',
+                resource: UnitResource::class
+            ),
         ];
     }
 
