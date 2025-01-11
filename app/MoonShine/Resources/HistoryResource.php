@@ -37,6 +37,23 @@ class HistoryResource extends ModelResource
         ];
     }
 
+    protected function filters(): iterable
+    {
+        return [
+            Date::make('Date', 'Date'),
+            BelongsTo::make(
+                'Shop',
+                'shop',
+                resource: ShopResource::class
+            )->nullable(),
+            BelongsTo::make(
+                'Product',
+                'product',
+                resource: ProductResource::class
+            )->nullable(),
+        ];
+    }
+
     protected function indexFields(): iterable
     {
         return [
@@ -72,9 +89,21 @@ class HistoryResource extends ModelResource
     protected function formFields(): iterable
     {
         return [
-            Image::make('image')
-                ->dir('products'),
-            Text::make('Name'),
+            Date::make('date')
+                ->format('d.m.Y'),
+            BelongsTo::make(
+                'Shop',
+                'shop',
+                resource: ShopResource::class
+            ),
+            BelongsTo::make(
+                'Product',
+                'product',
+                resource: ProductResource::class
+            ),
+            Text::make('Price'),
+            Text::make('Amount'),
+            Text::make('Total'),
         ];
     }
 
