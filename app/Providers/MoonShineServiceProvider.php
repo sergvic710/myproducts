@@ -14,6 +14,8 @@ use App\MoonShine\Resources\MoonShineUserRoleResource;
 use App\MoonShine\Resources\CategoryResource;
 use App\MoonShine\Resources\ProductResource;
 use App\MoonShine\Resources\UnitResource;
+use App\MoonShine\Resources\HistoryResource;
+use App\MoonShine\Resources\ShopResource;
 
 class MoonShineServiceProvider extends ServiceProvider
 {
@@ -33,6 +35,8 @@ class MoonShineServiceProvider extends ServiceProvider
                 CategoryResource::class,
                 ProductResource::class,
                 UnitResource::class,
+                HistoryResource::class,
+                ShopResource::class,
             ])
             ->pages([
                 ...$config->getPages(),

@@ -37,6 +37,8 @@ use MoonShine\Laravel\Resources\MoonShineUserResource;
 use MoonShine\Laravel\Resources\MoonShineUserRoleResource;
 use App\MoonShine\Resources\ProductResource;
 use App\MoonShine\Resources\UnitResource;
+use App\MoonShine\Resources\HistoryResource;
+use App\MoonShine\Resources\ShopResource;
 
 final class MoonShineLayout extends AppLayout
 {
@@ -54,7 +56,9 @@ final class MoonShineLayout extends AppLayout
                 MenuItem::make('Categories', CategoryResource::class),
                 MenuItem::make('Products', ProductResource::class)
             ]),
-            MenuItem::make('Units', UnitResource::class)
+            MenuItem::make('Shops', ShopResource::class),
+            MenuItem::make('Units', UnitResource::class),
+            MenuItem::make('Histories', HistoryResource::class),
         ];
     }
 
