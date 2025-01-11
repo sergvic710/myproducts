@@ -13,6 +13,7 @@ use App\Models\Product;
 use App\Models\Shop;
 use App\Repositories\ProductRepository;
 use App\Services\ImportHistoryService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Date;
 
 class HistoryController extends Controller
@@ -27,15 +28,27 @@ class HistoryController extends Controller
         return view('history.index',[
             'histories' => $histories,
             'products' => $products,
+            'date' => '',
             'title' => 'Histories'
         ]);
     }
 
     public function search(SearchHistoryRequest $request)
     {
-        if( $request->product_id) {
-            $histories = History::where('product_id', $request->product_id)
-                ->orderBy('date', 'desc')
+//        $date  = '';
+//        $product_id = -1;
+        if( $request->method() == 'POST') {
+            $builder = History::query();
+            if ((int)$request->product_id > 0 ) {
+                $builder->where('product_id', $request->product_id);
+//                ->orderBy('date', 'desc')
+//                ->paginate(15);
+            }
+            if( $request->date) {
+                $date = Carbon::parse($request->date)->format('Y-m-d');
+                $builder->where('date', $date);
+            }
+            $histories = $builder->orderBy('date', 'desc')
                 ->paginate(15);
         }
         $products = ProductRepository::getAllProducts();
@@ -43,6 +56,7 @@ class HistoryController extends Controller
             'histories' => $histories,
             'products' => $products,
             'product_id' => $request->product_id,
+            'date' => $request->date,
             'title' => 'Histories'
         ]);
     }

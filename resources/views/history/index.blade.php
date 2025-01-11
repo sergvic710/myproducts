@@ -40,12 +40,21 @@
             {{--                <input type="text" id="table-search-users" class="block pt-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg w-80 bg-gray-50 focus:ring-blue-500 focus:border-blue-500" placeholder="Search for users">--}}
             {{--            </div>--}}
         </div>
-        <form class="max-w-md mx-auto" method="post" action="{{ route('history.search') }}">
+        <form class="w-full mx-auto" method="post" action="{{ route('history.search') }}">
             @csrf
-            <div class="relative z-0 w-full mb-5 group">
-                <div class="mb-6 relative">
+            <div class="relative z-0 w-full mb-5 flex items-end">
+                <div class="mb-6 relative  pl-0 pr-4">
+                    <div class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none">
+                        <svg class="w-4 h-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M20 4a2 2 0 0 0-2-2h-2V1a1 1 0 0 0-2 0v1h-3V1a1 1 0 0 0-2 0v1H6V1a1 1 0 0 0-2 0v1H2a2 2 0 0 0-2 2v2h20V4ZM0 18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H0v10Zm5-8h10a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Z"/>
+                        </svg>
+                    </div>
+                    <input datepicker datepicker-autohide id="date" name="date" type="text" value="{{ $date }}" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5" placeholder="Select date">
+                </div>
+                <div class="mb-6 relative  px-4">
                     <label for="product_id" class="block mb-2 text-sm font-medium text-gray-900">Search by product </label>
                     <select id="product_id" name="product_id" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                        <option value="-1"> Select product</option>
                         @foreach($products as $item)
                             @if( isset($product_id)  )
                                 <option value="{{ $item->id }}" {{ ($product_id == $item->id) ? 'selected' : '' }}> {{ $item->name }}</option>
@@ -54,8 +63,13 @@
                             @endif
                         @endforeach
                     </select>
-                    <button type="submit" class="mt-3 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 focus:outline-none">Search</button>
                 </div>
+                <div class="mb-6 relative px-4">
+                    <button type="submit" class="mt-3 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 focus:outline-none">Search</button>
+                    <a href="{{ route('history.index') }}" class="mt-3 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 focus:outline-none">Reset</a>
+                </div>
+            </div>
+            <div class="relative z-0 w-full mb-5 flex">
             </div>
         </form>
 
@@ -111,9 +125,9 @@
                             <div class="font-normal text-gray-500"></div>
                         </div>
                     </th>
-{{--                    <td class="px-6 py-1">--}}
-{{--                        {{ $item->product->name }}--}}
-{{--                    </td>--}}
+                    {{--                    <td class="px-6 py-1">--}}
+                    {{--                        {{ $item->product->name }}--}}
+                    {{--                    </td>--}}
                     <td class="px-6 py-1">
                         {{ $item->amount}}  {{ $item->product->unit->name }}
                     </td>
