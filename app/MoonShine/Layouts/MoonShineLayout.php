@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Layouts;
 
+use App\MoonShine\Resources\CategoryResource;
 use MoonShine\Laravel\Layouts\AppLayout;
 use MoonShine\ColorManager\ColorManager;
 use MoonShine\Contracts\ColorManager\ColorManagerContract;
@@ -30,6 +31,10 @@ use MoonShine\UI\Components\{Breadcrumbs,
     Layout\TopBar,
     Layout\Wrapper,
     When};
+use MoonShine\MenuManager\MenuGroup;
+use MoonShine\MenuManager\MenuItem;
+use MoonShine\Laravel\Resources\MoonShineUserResource;
+use MoonShine\Laravel\Resources\MoonShineUserRoleResource;
 
 final class MoonShineLayout extends AppLayout
 {
@@ -43,7 +48,10 @@ final class MoonShineLayout extends AppLayout
     protected function menu(): array
     {
         return [
-            ...parent::menu(),
+            MenuGroup::make('Products', [
+                MenuItem::make('Categories', CategoryResource::class),
+                MenuItem::make('Roles', MoonShineUserRoleResource::class)
+            ])
         ];
     }
 
