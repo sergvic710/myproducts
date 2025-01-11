@@ -54,12 +54,12 @@ class HistoryResource extends ModelResource
             ),
             Text::make('Price'),
             Text::make('Amount'),
-//            BelongsTo::make(
-//                'Unit',
-//                'product',
-//                fn($item) => "$item->unit",
-//                resource: ProductResource::class
-//            ),
+            BelongsTo::make(
+                'Unit',
+                'product',
+                fn($item) => "{$item->unit->name}",
+                resource: ProductResource::class
+            ),
             Text::make('Total'),
 //            BelongsTo::make(
 //                'Unit',
