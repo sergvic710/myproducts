@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\MoonShine\Resources;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Category;
-use App\MoonShine\Pages\Category\CategoryIndexPage;
-use App\MoonShine\Pages\Category\CategoryFormPage;
-use App\MoonShine\Pages\Category\CategoryDetailPage;
+use App\Models\Unit;
+use App\MoonShine\Pages\Unit\UnitIndexPage;
+use App\MoonShine\Pages\Unit\UnitFormPage;
+use App\MoonShine\Pages\Unit\UnitDetailPage;
 
 use MoonShine\Laravel\Resources\ModelResource;
 use MoonShine\Laravel\Pages\Page;
@@ -16,14 +16,13 @@ use MoonShine\UI\Fields\Image;
 use MoonShine\UI\Fields\Text;
 
 /**
- * @extends ModelResource<Category, CategoryIndexPage, CategoryFormPage, CategoryDetailPage>
+ * @extends ModelResource<Unit, UnitIndexPage, UnitFormPage, UnitDetailPage>
  */
-class CategoryResource extends ModelResource
+class UnitResource extends ModelResource
 {
-    protected string $model = Category::class;
+    protected string $model = Unit::class;
 
-    protected string $title = 'Categories';
-
+    protected string $title = 'Units';
     protected string $column = 'name';
 
     /**
@@ -32,31 +31,28 @@ class CategoryResource extends ModelResource
     protected function pages(): array
     {
         return [
-            CategoryIndexPage::class,
-            CategoryFormPage::class,
-            CategoryDetailPage::class,
+            UnitIndexPage::class,
+            UnitFormPage::class,
+            UnitDetailPage::class,
         ];
     }
 
     protected function indexFields(): iterable
     {
         return [
-            Image::make('image'),
-            Text::make('name'),
+            Text::make('Name'),
         ];
     }
 
     protected function formFields(): iterable
     {
         return [
-            Image::make('image')
-                ->dir('category'),
-            Text::make('name'),
+            Text::make('Name'),
         ];
     }
 
     /**
-     * @param Category $item
+     * @param Unit $item
      *
      * @return array<string, string[]|string>
      * @see https://laravel.com/docs/validation#available-validation-rules
