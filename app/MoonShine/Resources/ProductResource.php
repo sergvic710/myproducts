@@ -42,6 +42,7 @@ class ProductResource extends ModelResource
     protected function indexFields(): iterable
     {
         return [
+            Image::make('image'),
             BelongsTo::make(
                 'Category',
                 'category',
