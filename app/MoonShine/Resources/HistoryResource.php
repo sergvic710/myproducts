@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\MoonShine\Resources;
 
 use App\Models\History;
+use App\MoonShine\Pages\History\HistoryImportPage;
 use App\MoonShine\Pages\History\HistoryIndexPage;
 use App\MoonShine\Pages\History\HistoryFormPage;
 use App\MoonShine\Pages\History\HistoryDetailPage;
@@ -12,8 +13,9 @@ use App\MoonShine\Pages\History\HistoryDetailPage;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
 use MoonShine\Laravel\Resources\ModelResource;
 use MoonShine\Laravel\Pages\Page;
+use MoonShine\Support\ListOf;
+use MoonShine\UI\Components\ActionButton;
 use MoonShine\UI\Fields\Date;
-use MoonShine\UI\Fields\Image;
 use MoonShine\UI\Fields\Text;
 
 /**
@@ -34,7 +36,16 @@ class HistoryResource extends ModelResource
             HistoryIndexPage::class,
             HistoryFormPage::class,
             HistoryDetailPage::class,
+            HistoryImportPage::class
         ];
+    }
+
+    protected function topButtons(): ListOf
+    {
+        return parent::topButtons()->add(
+            ActionButton::make('Import', $this->getPageUrl(HistoryImportPage::class))
+//                ->dispatchEvent(AlpineJs::event(JsEvent::TABLE_UPDATED, $this->getListComponentName()))
+        );
     }
 
     protected function filters(): iterable
@@ -57,53 +68,12 @@ class HistoryResource extends ModelResource
     protected function indexFields(): iterable
     {
         return [
-            Date::make('date')
-            ->format('d.m.Y'),
-            BelongsTo::make(
-                'Shop',
-                'shop',
-                resource: ShopResource::class
-            ),
-            BelongsTo::make(
-                'Product',
-                'product',
-                resource: ProductResource::class
-            ),
-            Text::make('Price'),
-            Text::make('Amount'),
-            BelongsTo::make(
-                'Unit',
-                'product',
-                fn($item) => "{$item->unit->name}",
-                resource: ProductResource::class
-            ),
-            Text::make('Total'),
-//            BelongsTo::make(
-//                'Unit',
-//                'unit',
-//                resource: UnitResource::class
-//            ),
         ];
     }
 
     protected function formFields(): iterable
     {
         return [
-            Date::make('date')
-                ->format('d.m.Y'),
-            BelongsTo::make(
-                'Shop',
-                'shop',
-                resource: ShopResource::class
-            ),
-            BelongsTo::make(
-                'Product',
-                'product',
-                resource: ProductResource::class
-            ),
-            Text::make('Price'),
-            Text::make('Amount'),
-            Text::make('Total'),
         ];
     }
 

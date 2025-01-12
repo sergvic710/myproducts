@@ -11,6 +11,8 @@ use App\Http\Requests\History\UpdateHistoryRequest;
 use App\Models\History;
 use App\Models\Product;
 use App\Models\Shop;
+use App\MoonShine\Pages\History\HistoryImportPage;
+use App\MoonShine\Pages\History\HistoryIndexPage;
 use App\Repositories\ProductRepository;
 use App\Services\ImportHistoryService;
 use Carbon\Carbon;
@@ -144,14 +146,15 @@ class HistoryController extends Controller
         ]);
     }
 
-    public function import(ImportHistoryRequest $import)
+    public function import(ImportHistoryRequest $import, HistoryImportPage $page)
     {
         $filePath = $import->file('file')->path();
 
         ImportHistoryService::import($import->shop_id, $filePath);
 
+        return $page->loaded();
 //        $history->delete();
-        return redirect()->route('history.index')->with('success', ' Import successfully.');
+//        return redirect()->route('history.index')->with('success', ' Import successfully.');
     }
 
     public function chart(ChartHistoryRequest $request)

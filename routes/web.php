@@ -1,4 +1,7 @@
 <?php
+use Illuminate\Support\Facades\Route;
+
+Route::post('history/import-action', [\App\Http\Controllers\History\HistoryController::class, 'import'])->name('history.import-action');
 
 //use Illuminate\Support\Facades\Route;
 //

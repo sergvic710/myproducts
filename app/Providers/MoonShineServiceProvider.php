@@ -16,6 +16,7 @@ use App\MoonShine\Resources\ProductResource;
 use App\MoonShine\Resources\UnitResource;
 use App\MoonShine\Resources\HistoryResource;
 use App\MoonShine\Resources\ShopResource;
+use App\MoonShine\Pages\History\HistoryImportPage;
 
 class MoonShineServiceProvider extends ServiceProvider
 {
@@ -40,6 +41,7 @@ class MoonShineServiceProvider extends ServiceProvider
             ])
             ->pages([
                 ...$config->getPages(),
+                HistoryImportPage::class,
             ])
         ;
     }
