@@ -6,6 +6,8 @@ namespace App\MoonShine\Pages\History;
 
 use App\MoonShine\Resources\ProductResource;
 use App\MoonShine\Resources\ShopResource;
+use App\Services\MetricsService;
+use MoonShine\Apexcharts\Components\DonutChartMetric;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
 use MoonShine\Laravel\Pages\Crud\IndexPage;
 use MoonShine\Contracts\UI\ComponentContract;
