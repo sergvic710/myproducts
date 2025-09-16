@@ -13,6 +13,7 @@ use MoonShine\Laravel\Pages\Crud\IndexPage;
 use MoonShine\Contracts\UI\ComponentContract;
 use MoonShine\Contracts\UI\FieldContract;
 use MoonShine\UI\Fields\Date;
+use MoonShine\UI\Fields\Image;
 use MoonShine\UI\Fields\Text;
 use Throwable;
 
@@ -31,10 +32,13 @@ class HistoryIndexPage extends IndexPage
                 'shop',
                 resource: ShopResource::class
             ),
+            Image::make('image', 'product.image'),
             BelongsTo::make(
                 'Product',
                 'product',
                 resource: ProductResource::class
+            )->withImage(
+                'image',
             ),
             Text::make('Price'),
             Text::make('Amount'),

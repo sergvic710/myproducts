@@ -55,6 +55,7 @@ class Dashboard extends Page
                                 Date::make('date')
                                     ->format('d.m.Y'),
 //                                Image::make('Image'),
+                                Image::make('image', 'product.image'),
                                 BelongsTo::make(
                                     'Product',
                                     'product',
@@ -62,7 +63,7 @@ class Dashboard extends Page
                                 ),
                             ])
                             ->items(History::limit(10)->orderBy('date', 'desc')->get())
-                            ->buttons([])
+                            ->preview()
                         ->cast(new ModelCaster(History::class)),
                     ],
                     colSpan: 6,

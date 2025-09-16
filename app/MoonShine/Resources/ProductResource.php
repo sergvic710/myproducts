@@ -67,7 +67,7 @@ class ProductResource extends ModelResource
                 'Category',
                 'category',
                 resource: CategoryResource::class
-            )
+            )->withImage('image')
             ->searchable(),
             Text::make('Name'),
             Text::make('Count'),
