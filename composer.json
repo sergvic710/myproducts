@@ -13,7 +13,8 @@
         "laravel/framework": "^11.31",
         "laravel/tinker": "^2.9",
         "smalot/pdfparser": "^2.11",
-        "spatie/laravel-medialibrary": "^11.11"
+        "spatie/laravel-medialibrary": "^11.11",
+        "yaza/laravel-google-drive-storage": "^4.1"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

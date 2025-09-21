@@ -63,4 +63,12 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT)
+
+## Setup a Laravel Storage driver with Google Drive API
+[Setup a Laravel Storage driver with Google Drive API](https://gist.github.com/sergomet/f234cc7a8351352170eb547cccd65011)
+- [Google Drive integration with Laravel](https://www.luckymedia.dev/blog/google-drive-integration-with-laravel))
+- [Google Drive API Setup for Laravel 11 Integration (Part 1)](https://www.luckymedia.dev/blog/google-drive-api-setup-for-laravel-10-integration-part-1)
+- [Laravel Project Setup for Google Drive API Integration (Part 2)](https://www.luckymedia.dev/blog/laravel-project-setup-for-google-drive-api-integration-part-2)
+
+
