@@ -30,7 +30,9 @@ class ProductController extends Controller
             Document::fromUrl('http://coretest.harvey-rus.ru/upload/222985_68653436.pdf')
         );
 
+
         if( !empty( $ocrResponse->toText())) {
+            sleep(5);
             $prompt = $ocrResponse->toText();
             $prompt .= 'Задача: '
                 . 'Это  чек из магазина Prisma.
