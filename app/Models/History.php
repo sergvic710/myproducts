@@ -17,6 +17,7 @@ class History extends Model
         'amount',
         'total',
         'date',
+        'filename'
     ];
     public function product() : \Illuminate\Database\Eloquent\Relations\BelongsTo
     {

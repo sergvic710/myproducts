@@ -11,12 +11,12 @@ use App\Http\Requests\History\UpdateHistoryRequest;
 use App\Models\History;
 use App\Models\Product;
 use App\Models\Shop;
-use App\MoonShine\Pages\History\HistoryImportPage;
-use App\MoonShine\Pages\History\HistoryIndexPage;
 use App\Repositories\ProductRepository;
 use App\Services\ImportHistoryService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Date;
+use Illuminate\Support\Facades\Storage;
+use Yaza\LaravelGoogleDriveStorage\Gdrive;
 
 class HistoryController extends Controller
 {
@@ -25,13 +25,49 @@ class HistoryController extends Controller
      */
     public function index()
     {
-        $histories = History::orderBy('date', 'desc')->paginate(15);
+        // Get sort parameters from request
+        $sortField = request('sort_by', 'date');
+        $sortDirection = request('sort_dir', 'desc');
+        
+        // Validate sort direction
+        if (!in_array(strtolower($sortDirection), ['asc', 'desc'])) {
+            $sortDirection = 'desc';
+        }
+        
+        // Define sortable fields and their corresponding table columns
+        $sortableFields = [
+            'date' => 'histories.date',
+            'shop_id' => 'histories.shop_id',
+            'product_name' => 'products.name',  // Add product name sorting
+            'product_id' => 'histories.product_id',
+            'amount' => 'histories.amount',
+            'total' => 'histories.total'
+        ];
+        
+        // Set default sort field if not valid
+        if (!array_key_exists($sortField, $sortableFields)) {
+            $sortField = 'date';
+        }
+        
+        $histories = History::select('histories.*')
+            ->join('products', 'histories.product_id', '=', 'products.id')
+            ->with(['product', 'shop'])
+            ->orderBy($sortableFields[$sortField], $sortDirection)
+            ->paginate(15)
+            ->appends([
+                'sort_by' => $sortField,
+                'sort_dir' => $sortDirection
+            ]);
+            
         $products = ProductRepository::getAllProducts();
-        return view('history.index',[
+        
+        return view('history.index', [
             'histories' => $histories,
             'products' => $products,
             'date' => '',
-            'title' => 'Histories'
+            'title' => 'Histories',
+            'sortField' => $sortField,
+            'sortDirection' => $sortDirection
         ]);
     }
 
@@ -146,15 +182,15 @@ class HistoryController extends Controller
         ]);
     }
 
-    public function import(ImportHistoryRequest $import, HistoryImportPage $page)
+    public function import()
     {
-        $filePath = $import->file('file')->path();
 
-        ImportHistoryService::import($import->shop_id, $filePath);
+            ImportHistoryService::sync();
+//        $filePath = $import->file('file')->path();
 
-        return $page->loaded();
+//        return $page->loaded();
 //        $history->delete();
-//        return redirect()->route('history.index')->with('success', ' Import successfully.');
+        return redirect()->route('history.index')->with('success', ' Import successfully.');
     }
 
     public function chart(ChartHistoryRequest $request)

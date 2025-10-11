@@ -16,7 +16,7 @@
             </div>
 
             <div class="mb-6 relative">
-                <label for="shop_id" class="block mb-2 text-sm font-medium text-gray-900">Select shop </label>
+                <label for="shop_id" class="block mb-2 text-sm font-medium text-gray-900">Shop</label>
                 <select id="shop_id" name="shop_id" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                     @foreach($shops as $item)
                         <option value="{{ $item->id }}" {{ $history->shop_id == $item->id ? 'selected' : '' }} > {{ $item->name  }}</option>
@@ -25,7 +25,7 @@
             </div>
 
             <div class="mb-6 relative">
-                <label for="product_id" class="block mb-2 text-sm font-medium text-gray-900">Select product </label>
+                <label for="product_id" class="block mb-2 text-sm font-medium text-gray-900">Product</label>
                 <select id="product_id" name="product_id" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                     @foreach($products as $item)
                         <option value="{{ $item->id }}" {{ $history->product_id == $item->id ? 'selected' : '' }} > {{ $item->name }} &nbsp; for {{ $item->count }} &nbsp;{{ $item->unit->name }}</option>

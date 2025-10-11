@@ -9,6 +9,10 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\Unit;
 use App\Repositories\ProductRepository;
+use Prism\Prism\Enums\Provider;
+use Prism\Prism\Prism;
+use Prism\Prism\ValueObjects\Media\Document;
+use Prism\Prism\ValueObjects\Media\Image;
 
 class ProductController extends Controller
 {
@@ -17,8 +21,38 @@ class ProductController extends Controller
      */
     public function index()
     {
+
+        /** @var Mistral $provider */
+        $provider = Prism::provider(\Prism\Prism\Enums\Provider::Mistral);
+
+        $ocrResponse = $provider->ocr(
+            'mistral-ocr-latest',
+            Document::fromUrl('http://coretest.harvey-rus.ru/upload/222985_68653436.pdf')
+        );
+
+        if( !empty( $ocrResponse->toText())) {
+            $prompt = $ocrResponse->toText();
+            $prompt .= 'Задача: '
+                . 'Это  чек из магазина Prisma.
+            Он на финском языке. Проанализируй его и выдели в нем продукты. Так же определи к какой категории продуктов относится товар.
+            Результат выдай в json  в котором есть столбцы Товар количество или вес Цена за штуку или килограм Сумма Единица измерения.
+            В чеке есть так же скидка на товар по возможности ее тоже нужно учесть.
+            Зафиксируй дату чека.  Категории продуктов на английском языке. Не выводи лишней информации , только json.';
+
+            $response = Prism::text()
+            ->using(Provider::Mistral, 'mistral-small-latest')
+            ->withPrompt( $prompt )
+            ->asText();
+
+            if( !empty($response->text) ) {
+                $text = str_replace(['```json','```'], '', $response->text);
+                $data = json_decode($text);
+            }
+        }
+
+
         $products = ProductRepository::getAllProducts();
-        return view('product.index',[
+        return view('product.index', [
             'products' => $products,
             'title' => 'Products'
         ]);
@@ -45,7 +79,7 @@ class ProductController extends Controller
     {
         $product = Product::create($request->all());
         $product->clearMediaCollection('image');
-        if( $request->image ) {
+        if ($request->image) {
             $product
                 ->addMedia($request->image)
                 ->toMediaCollection('image');
@@ -59,7 +93,6 @@ class ProductController extends Controller
      */
     public function show(Product $product)
     {
-
     }
 
     /**
@@ -84,7 +117,7 @@ class ProductController extends Controller
     {
         $product->update($request->all());
         $product->clearMediaCollection('image');
-        if( $request->image ) {
+        if ($request->image) {
             $product
                 ->addMedia($request->image)
                 ->toMediaCollection('image');

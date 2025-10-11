@@ -71,4 +71,3 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
 - [Google Drive API Setup for Laravel 11 Integration (Part 1)](https://www.luckymedia.dev/blog/google-drive-api-setup-for-laravel-10-integration-part-1)
 - [Laravel Project Setup for Google Drive API Integration (Part 2)](https://www.luckymedia.dev/blog/laravel-project-setup-for-google-drive-api-integration-part-2)
 
-

@@ -12,6 +12,7 @@
         "php": "^8.2",
         "laravel/framework": "^11.31",
         "laravel/tinker": "^2.9",
+        "prism-php/prism": "^0.91.0",
         "smalot/pdfparser": "^2.11",
         "spatie/laravel-medialibrary": "^11.11",
         "yaza/laravel-google-drive-storage": "^4.1"

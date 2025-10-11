@@ -17,12 +17,6 @@
                         <li>
                             <a href="{{ route('history.import') }}" class="block px-4 py-2 hover:bg-gray-100">Import</a>
                         </li>
-                        {{--                        <li>--}}
-                        {{--                            <a href="#" class="block px-4 py-2 hover:bg-gray-100">Promote</a>--}}
-                        {{--                        </li>--}}
-                        {{--                        <li>--}}
-                        {{--                            <a href="#" class="block px-4 py-2 hover:bg-gray-100">Activate account</a>--}}
-                        {{--                        </li>--}}
                     </ul>
                     <div class="py-1">
                         <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Delete User</a>
@@ -30,15 +24,6 @@
                 </div>
             </div>
 
-            {{--            <label for="table-search" class="sr-only">Search</label>--}}
-            {{--            <div class="relative">--}}
-            {{--                <div class="absolute inset-y-0 rtl:inset-r-0 start-0 flex items-center ps-3 pointer-events-none">--}}
-            {{--                    <svg class="w-4 h-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">--}}
-            {{--                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>--}}
-            {{--                    </svg>--}}
-            {{--                </div>--}}
-            {{--                <input type="text" id="table-search-users" class="block pt-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg w-80 bg-gray-50 focus:ring-blue-500 focus:border-blue-500" placeholder="Search for users">--}}
-            {{--            </div>--}}
         </div>
         <form class="w-full mx-auto" method="post" action="{{ route('history.search') }}">
             @csrf
@@ -74,41 +59,59 @@
         </form>
 
         <table class="w-full text-sm text-left rtl:text-right text-gray-500">
-            <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+            <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
             <tr>
-                {{--                <th scope="col" class="p-4">--}}
-                {{--                    <div class="flex items-center">--}}
-                {{--                        <input id="checkbox-all-search" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2">--}}
-                {{--                        <label for="checkbox-all-search" class="sr-only">checkbox</label>--}}
-                {{--                    </div>--}}
-                {{--                </th>--}}
+                <!-- Date Column -->
                 <th scope="col" class="px-6 py-3">
-                    Date
+                    <div class="flex items-center">
+                        @php
+                            $newSortDirection = ($sortField === 'date' && $sortDirection === 'asc') ? 'desc' : 'asc';
+                            $sortIcon = $sortField === 'date' ? ($sortDirection === 'asc' ? '↑' : '↓') : '↕';
+                        @endphp
+                        <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'date', 'sort_dir' => $newSortDirection]) }}" class="flex items-center">
+                            Date
+                            <span class="ml-1">{{ $sortIcon }}</span>
+                        </a>
+                    </div>
                 </th>
+
+                <!-- Shop Column -->
                 <th scope="col" class="px-6 py-3">
                     Shop
                 </th>
+
+                <!-- Product Column -->
                 <th scope="col" class="px-6 py-3">
-                    Product
+                    <div class="flex items-center">
+                        @php
+                            $newSortDirection = ($sortField === 'product_name' && $sortDirection === 'asc') ? 'desc' : 'asc';
+                            $sortIcon = $sortField === 'product_name' ? ($sortDirection === 'asc' ? '↑' : '↓') : '↕';
+                        @endphp
+                        <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'product_name', 'sort_dir' => $newSortDirection]) }}" class="flex items-center">
+                            Product
+                            <span class="ml-1">{{ $sortIcon }}</span>
+                        </a>
+                    </div>
                 </th>
+
+                <!-- Amount Column -->
+                <th scope="col" class="px-6 py-3">
+                    Price
+                </th>
+                <!-- Amount Column -->
                 <th scope="col" class="px-6 py-3">
                     Amount
                 </th>
+
+                <!-- Total Column -->
                 <th scope="col" class="px-6 py-3">
                     Total
                 </th>
-                <th></th>
             </tr>
             </thead>
             <tbody>
             @foreach($histories as $item)
                 <tr class="bg-white border-b hover:bg-gray-50">
-                    {{--                <td class="w-4 p-4">--}}
-                    {{--                    <div class="flex items-center">--}}
-                    {{--                        <input id="checkbox-table-search-1" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2">--}}
-                    {{--                        <label for="checkbox-table-search-1" class="sr-only">checkbox</label>--}}
-                    {{--                    </div>--}}
-                    {{--                </td>--}}
                     <td class="px-6 py-1">
                         {{ \Carbon\Carbon::parse($item->date)->format('d.m.Y') }}
                     </td>
@@ -125,9 +128,9 @@
                             <div class="font-normal text-gray-500"></div>
                         </div>
                     </th>
-                    {{--                    <td class="px-6 py-1">--}}
-                    {{--                        {{ $item->product->name }}--}}
-                    {{--                    </td>--}}
+                    <td class="px-6 py-1">
+                        {{ $item->price}} €
+                    </td>
                     <td class="px-6 py-1">
                         {{ $item->amount}}  {{ $item->product->unit->name }}
                     </td>
