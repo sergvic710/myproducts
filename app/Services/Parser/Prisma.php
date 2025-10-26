@@ -1,42 +1,12 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Parser;
 
-use App\Models\History;
-use App\Models\Shop;
-use App\Repositories\ProductRepository;
-use Illuminate\Support\Facades\Storage;
-use Smalot\PdfParser\Encoding\PDFDocEncoding;
 use Smalot\PdfParser\Parser;
-use Yaza\LaravelGoogleDriveStorage\Gdrive;
 
-class ImportHistoryService
+class Prisma
 {
-
-
-    public static function sync()
-    {
-        $files = Gdrive::all('Groceries');
-        if ($files->count() > 0) {
-            foreach ($files as $file) {
-                if ( !self::existRecord($file->extraMetadata()['filename'])) {
-                    $fileContent = Gdrive::get($file->path());
-                    if ($fileContent) {
-                        if (Storage::put( '/sync/' . $file->extraMetadata()['name'], $fileContent->file)) {
-                            self::import(Storage::path('sync') . '/' . $file->extraMetadata()['name']);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    public static function existRecord($fileName) : bool
-    {
-        return History::where('filename', $fileName)->exists();
-    }
-
-    public static function import(string $filePath)
+    public static function parse($filePath) : array
     {
         $pathInfo = pathinfo($filePath);
         $parser = new Parser();
@@ -97,9 +67,6 @@ class ImportHistoryService
             $aa = 10;
         } while (!str_contains($data[$i][1], '-------'));
 
-        if (!empty($cart['products'])) {
-            Log::debug($cart);
-//            ProductRepository::productsSave($cart, $pathInfo['filename']);
-        }
+        return $cart;
     }
 }

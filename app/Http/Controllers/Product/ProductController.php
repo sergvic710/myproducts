@@ -22,37 +22,6 @@ class ProductController extends Controller
     public function index()
     {
 
-        /** @var Mistral $provider */
-        $provider = Prism::provider(\Prism\Prism\Enums\Provider::Mistral);
-
-        $ocrResponse = $provider->ocr(
-            'mistral-ocr-latest',
-            Document::fromUrl('http://coretest.harvey-rus.ru/upload/222985_68653436.pdf')
-        );
-
-
-        if( !empty( $ocrResponse->toText())) {
-            sleep(5);
-            $prompt = $ocrResponse->toText();
-            $prompt .= 'Задача: '
-                . 'Это  чек из магазина Prisma.
-            Он на финском языке. Проанализируй его и выдели в нем продукты. Так же определи к какой категории продуктов относится товар.
-            Результат выдай в json  в котором есть столбцы Товар количество или вес Цена за штуку или килограм Сумма Единица измерения.
-            В чеке есть так же скидка на товар по возможности ее тоже нужно учесть.
-            Зафиксируй дату чека.  Категории продуктов на английском языке. Не выводи лишней информации , только json.';
-
-            $response = Prism::text()
-            ->using(Provider::Mistral, 'mistral-small-latest')
-            ->withPrompt( $prompt )
-            ->asText();
-
-            if( !empty($response->text) ) {
-                $text = str_replace(['```json','```'], '', $response->text);
-                $data = json_decode($text);
-            }
-        }
-
-
         $products = ProductRepository::getAllProducts();
         return view('product.index', [
             'products' => $products,

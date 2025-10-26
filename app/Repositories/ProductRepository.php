@@ -24,8 +24,10 @@ class ProductRepository
             }
 
             $category = Category::where('name', 'default')->first();
+//            $category = Category::where('name', $item['category'])->first();
             if( !$category ) {
-                $unit = Category::create(['name' => 'default']);
+//                $category = Category::create(['name' => $item['category']]);
+                $category = Category::create(['name' => 'default']);
             }
             $product = Product::where('name', $item['name'])->first();
             if( !$product ) {
@@ -47,7 +49,7 @@ class ProductRepository
                         'filename' => $filename
                     ],
                     [
-                        'price' => $item['priceUnit'],
+                        'price' => $item['unitPrice'],
                         'amount' => $item['amount'],
                         'total' => $item['price']
                     ]
