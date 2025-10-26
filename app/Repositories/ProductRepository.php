@@ -15,7 +15,7 @@ class ProductRepository
     public static function getAllProducts() {
         return Product::orderBy('name', 'asc')->get();
     }
-    public static function productsSave( array $cart, string $filename)
+    public static function cartSave( array $cart, string $filename) :void
     {
         foreach ($cart['products'] as $item) {
             $unit = Unit::where('name', $item['unit'])->first();

@@ -33,7 +33,8 @@ class Handle extends WebhookHandler
                 $bot = TelegraphBot::fromId(1);
 
                 /** @var DefStudio\Telegraph\DTO\Photo $photo */
-                $file = $bot->store($doc, Storage::disk('public')->path('bot/docs'), $doc->filename());
+//                $file = $bot->store($doc, Storage::disk('public')->path('bot/docs'), $doc->filename());
+                $file = $bot->store($doc, Storage::path('bot/docs'), $doc->filename());
 //                Log::debug($file);
                 if( !empty( $file) ) {
 //                    Log::debug(Storage::setVisibility( 'bot/docs/' .$doc->filename(), 'public'));
