@@ -9,6 +9,10 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\Unit;
 use App\Repositories\ProductRepository;
+use App\Services\Parser\Lidl;
+use App\Services\Parser\Prisma;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Prism\Prism\Enums\Provider;
 use Prism\Prism\Prism;
 use Prism\Prism\ValueObjects\Media\Document;
@@ -21,6 +25,15 @@ class ProductController extends Controller
      */
     public function index()
     {
+        $filePath = Storage::path('bot/docs/222985_68653436.pdf');
+        $data = Prisma::parse($filePath);
+        Log::debug($data);
+
+        $filePath = Storage::path('bot/docs/2025.10.24_11000300622025102425813.jpg.png');
+        $data = Lidl::parse($filePath);
+        Log::debug($data);
+
+
 
         $products = ProductRepository::getAllProducts();
         return view('product.index', [
