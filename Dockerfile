@@ -1,4 +1,4 @@
-FROM php:8.2-apache
+FROM php:8.4-apache
 # Arguments defined in docker-compose.yml
 ARG user=sample
 ARG uid=1000
@@ -27,7 +27,8 @@ RUN apt-get update -y && apt-get install -y  \
     libfreetype6-dev \
     libmagickwand-dev \
     libxml2-dev \
-    libzip-dev
+    libzip-dev \
+    libicu-dev
 
 
 #RUN docker-php-ext-install zip
@@ -38,7 +39,8 @@ RUN docker-php-ext-install -j$(nproc) pdo_mysql \
     bcmath \
     gd \
     exif \
-    zip
+    zip \
+    intl
 
 RUN docker-php-ext-install mysqli && docker-php-ext-enable mysqli
 
