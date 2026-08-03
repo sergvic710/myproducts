@@ -54,8 +54,9 @@ class HistoryResource extends Resource
                 TextColumn::make('shop.name')->sortable(),
                 TextColumn::make('amount')->sortable(),
                 TextColumn::make('price')->money('EUR')->sortable(),
-                TextColumn::make('total')->money('EUR')->sortable(),
                 IconColumn::make('is_discount')->boolean(),
+                TextColumn::make('discount_price')->money('EUR'),
+                TextColumn::make('total')->money('EUR')->sortable(),
             ])
             ->defaultSort('date', 'desc')
             ->filters([

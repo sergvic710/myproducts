@@ -13,7 +13,7 @@ services:
 #        links:
 #            - db
         networks:
-            - default
+            - my_network
     db:
 #        platform: linux/x86_64
         image: mariadb:10
@@ -27,7 +27,7 @@ services:
         volumes:
             - ./docker/db:/var/lib/mysql
         networks:
-            - default
+            - my_network
     phpmyadmin:
         image: phpmyadmin/phpmyadmin
 #        links:
@@ -38,3 +38,9 @@ services:
             MYSQL_USER: superuser
             MYSQL_PASSWORD: SuperUser
             MYSQL_ROOT_PASSWORD: SuperUser
+        networks:
+            - my_network
+
+networks:
+    my_network:
+        external: true
