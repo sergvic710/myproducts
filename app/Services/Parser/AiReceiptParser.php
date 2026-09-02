@@ -73,7 +73,36 @@ class AiReceiptParser
             throw ReceiptParseException::emptyResponse($filePath);
         }
 
-        return ParsedReceipt::fromArray($response->structured);
+        return ParsedReceipt::fromArray($this->normalizeStructured($response->structured));
+    }
+
+    /**
+     * With tool calling, Anthropic occasionally nests the whole receipt as a
+     * JSON string under a single top-level property instead of filling the
+     * schema's fields directly. Detect that shape and unwrap it.
+     *
+     * @param  array<string, mixed>  $structured
+     * @return array<string, mixed>
+     */
+    private function normalizeStructured(array $structured): array
+    {
+        if (isset($structured['shop'], $structured['products'])) {
+            return $structured;
+        }
+
+        foreach ($structured as $value) {
+            if (! is_string($value)) {
+                continue;
+            }
+
+            $decoded = json_decode($value, true);
+
+            if (is_array($decoded) && isset($decoded['shop'], $decoded['products'])) {
+                return $decoded;
+            }
+        }
+
+        return $structured;
     }
 
     private function provider(): Provider
