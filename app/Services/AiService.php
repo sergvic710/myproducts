@@ -16,6 +16,10 @@ use Yaza\LaravelGoogleDriveStorage\Gdrive;
 use Prism\Prism\ValueObjects\ProviderRateLimit;
 use Prism\Prism\Exceptions\PrismRateLimitedException;
 
+/**
+ * @deprecated Mistral-based extraction. Replaced by AiReceiptParser and no longer
+ * part of the pipeline. Kept for reference only.
+ */
 class AiService
 {
 
