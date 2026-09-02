@@ -4,6 +4,10 @@ namespace App\Services\Parser;
 
 use Smalot\PdfParser\Parser;
 
+/**
+ * @deprecated Regex parser for Prisma PDFs. Replaced by AiReceiptParser and no
+ * longer part of the pipeline. Kept for reference only.
+ */
 class Prisma
 {
     public static function parse($filePath) : array

@@ -1,59 +1,77 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Bot;
 
-use App\Services\AiService;
+use App\Jobs\ProcessReceipt;
+use App\Models\History;
 use DefStudio\Telegraph\Handlers\WebhookHandler;
-use DefStudio\Telegraph\Models\TelegraphBot;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Stringable;
-use App\Services\Parser\Prisma;
 
 class Handle extends WebhookHandler
 {
-
-    public function start()
+    public function start(): void
     {
-        $this->reply('Hello.');
+        $this->reply('Hello. Send me a receipt as a PDF file or as a photo.');
     }
 
     protected function handleUnknownCommand(Stringable $message): void
     {
-        $this->reply('Unknown command.');
+        $this->reply('Unknown command. Send me a receipt as a PDF file or as a photo.');
     }
 
+    /**
+     * Save the attached receipt and hand it to the queue.
+     *
+     * Nothing is parsed here: reading a receipt takes longer than the ~60s
+     * after which Telegram retries the webhook.
+     */
     protected function handleChatMessage(Stringable $message): void
     {
-        if ($this->message->document()) {
-//            Log::debug($this->message->document()->filename());
-            $doc = $this->message->document();
-            if ($doc) {
-                /* @var \DefStudio\Telegraph\Models\TelegraphBot $bot */
-                $bot = TelegraphBot::fromId(1);
+        $document = $this->message?->document();
+        // photos() holds the same picture in several sizes, largest last.
+        $photo = $this->message?->photos()->last();
+        $attachment = $document ?? $photo;
 
-                /** @var DefStudio\Telegraph\DTO\Photo $photo */
-//                $file = $bot->store($doc, Storage::disk('public')->path('bot/docs'), $doc->filename());
-                $file = $bot->store($doc, Storage::path('bot/docs'), $doc->filename());
-//                Log::debug($file);
-                if( !empty( $file) ) {
-//                    Log::debug(Storage::setVisibility( 'bot/docs/' .$doc->filename(), 'public'));
-                    $fileUrl = Storage::url( 'bot/docs/' . $doc->filename());
-                    $filePath = Storage::path( 'bot/docs/' . $doc->filename());
-                    Log::debug($filePath);
+        if ($attachment === null) {
+            $this->chat->message('Send me a receipt: a PDF file or a photo.')->send();
 
-                    $data = Prisma::parse($filePath);
-                    Log::debug($data);
-
-
-//                    $data = AiService::getDataFile($fileUrl, $doc->filename());
-//                    if( !empty($data) && is_array($data) ) {
-//                        foreach ($data['products'] as $item) {
-//                            $this->reply('Product :.' . $item['name']);
-//                        }
-//                    }
-                }
-            }
+            return;
         }
+
+        $filename = $this->filename($document?->filename(), $attachment->id());
+
+        if (History::where('filename', $filename)->exists()) {
+            $this->chat->message('This receipt is already saved.')->send();
+
+            return;
+        }
+
+        $disk = Storage::disk((string) config('receipts.disk'));
+        $directory = $disk->path((string) config('receipts.path'));
+
+        $storedPath = $this->bot->store($attachment, $directory, $filename);
+
+        $this->chat->message('Receipt received. Reading it now…')->send();
+
+        ProcessReceipt::dispatch($storedPath, $filename, $this->chat->id);
+    }
+
+    /**
+     * Documents keep their own name. Photos have none, so derive a stable name
+     * from the Telegram file id — the same photo then always maps to the same
+     * filename, which is what makes the pipeline idempotent.
+     */
+    private function filename(?string $documentName, string $fileId): string
+    {
+        $documentName = $documentName !== null ? trim($documentName) : '';
+
+        if ($documentName !== '') {
+            return substr(basename($documentName), -255);
+        }
+
+        return 'photo_'.substr(sha1($fileId), 0, 16).'.jpg';
     }
 }

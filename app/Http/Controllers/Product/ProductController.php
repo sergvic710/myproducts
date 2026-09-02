@@ -9,14 +9,6 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\Unit;
 use App\Repositories\ProductRepository;
-use App\Services\Parser\Lidl;
-use App\Services\Parser\Prisma;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
-use Prism\Prism\Enums\Provider;
-use Prism\Prism\Prism;
-use Prism\Prism\ValueObjects\Media\Document;
-use Prism\Prism\ValueObjects\Media\Image;
 
 class ProductController extends Controller
 {
@@ -25,20 +17,11 @@ class ProductController extends Controller
      */
     public function index()
     {
-        $filePath = Storage::path('bot/docs/222985_68653436.pdf');
-        $data = Prisma::parse($filePath);
-        Log::debug($data);
-
-        $filePath = Storage::path('bot/docs/2025.10.24_11000300622025102425813.jpg.png');
-        $data = Lidl::parse($filePath);
-        Log::debug($data);
-
-
-
         $products = ProductRepository::getAllProducts();
+
         return view('product.index', [
             'products' => $products,
-            'title' => 'Products'
+            'title' => 'Products',
         ]);
     }
 
@@ -49,10 +32,11 @@ class ProductController extends Controller
     {
         $units = Unit::all();
         $categories = Category::all();
+
         return view('product.create', [
             'units' => $units,
             'categories' => $categories,
-            'title' => 'Create Product'
+            'title' => 'Create Product',
         ]);
     }
 
@@ -75,9 +59,7 @@ class ProductController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Product $product)
-    {
-    }
+    public function show(Product $product) {}
 
     /**
      * Show the form for editing the specified resource.
@@ -86,11 +68,12 @@ class ProductController extends Controller
     {
         $units = Unit::all();
         $categories = Category::all();
+
         return view('product.edit', [
             'product' => $product,
             'units' => $units,
             'categories' => $categories,
-            'title' => 'Edit Product'
+            'title' => 'Edit Product',
         ]);
     }
 
@@ -106,6 +89,7 @@ class ProductController extends Controller
                 ->addMedia($request->image)
                 ->toMediaCollection('image');
         }
+
         return redirect()->route('product.index')->with('success', 'Product update successfully.');
     }
 
@@ -115,6 +99,7 @@ class ProductController extends Controller
     public function destroy(Product $product)
     {
         $product->delete();
+
         return redirect()->route('product.index')->with('success', 'Product destroy successfully.');
     }
 }

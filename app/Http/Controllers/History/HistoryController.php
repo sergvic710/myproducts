@@ -4,7 +4,6 @@ namespace App\Http\Controllers\History;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\History\ChartHistoryRequest;
-use App\Http\Requests\History\ImportHistoryRequest;
 use App\Http\Requests\History\SearchHistoryRequest;
 use App\Http\Requests\History\StoreHistoryRequest;
 use App\Http\Requests\History\UpdateHistoryRequest;
@@ -16,7 +15,6 @@ use App\Services\ImportHistoryService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Storage;
-use Yaza\LaravelGoogleDriveStorage\Gdrive;
 
 class HistoryController extends Controller
 {
@@ -184,13 +182,10 @@ class HistoryController extends Controller
 
     public function import()
     {
+        $queued = ImportHistoryService::sync();
 
-            ImportHistoryService::sync();
-//        $filePath = $import->file('file')->path();
-
-//        return $page->loaded();
-//        $history->delete();
-        return redirect()->route('history.index')->with('success', ' Import successfully.');
+        return redirect()->route('history.index')
+            ->with('success', "Queued {$queued} receipt(s) for reading.");
     }
 
     public function chart(ChartHistoryRequest $request)

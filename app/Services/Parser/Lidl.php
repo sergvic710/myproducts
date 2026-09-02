@@ -5,6 +5,10 @@ namespace App\Services\Parser;
 use Codesmiths\LaravelOcrSpace\Facades\OcrSpace;
 use Codesmiths\LaravelOcrSpace\OcrSpaceOptions;
 
+/**
+ * @deprecated OCR Space parser for Lidl photos. Replaced by AiReceiptParser and no
+ * longer part of the pipeline. Kept for reference only.
+ */
 class Lidl
 {
     public static function parse($filePath) : array

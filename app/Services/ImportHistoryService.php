@@ -1,105 +1,70 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
+use App\Jobs\ProcessReceipt;
 use App\Models\History;
-use App\Models\Shop;
-use App\Repositories\ProductRepository;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Smalot\PdfParser\Encoding\PDFDocEncoding;
-use Smalot\PdfParser\Parser;
-use Yaza\LaravelGoogleDriveStorage\Gdrive;
+use Throwable;
 
+/**
+ * Pulls receipt files from Google Drive and hands them to the same queue job
+ * the Telegram bot uses, so there is only one parsing path.
+ */
 class ImportHistoryService
 {
-
-
-    public static function sync()
+    public static function sync(): int
     {
-        $files = Gdrive::all('Groceries');
-        if ($files->count() > 0) {
-            foreach ($files as $file) {
-                if ( !self::existRecord($file->extraMetadata()['filename'])) {
-                    $fileContent = Gdrive::get($file->path());
-                    if ($fileContent) {
-                        if (Storage::put( '/sync/' . $file->extraMetadata()['name'], $fileContent->file)) {
-                            self::import(Storage::path('sync') . '/' . $file->extraMetadata()['name']);
-                        }
-                    }
+        $files = \Yaza\LaravelGoogleDriveStorage\Gdrive::all('Groceries');
+        $queued = 0;
+
+        foreach ($files as $file) {
+            // The old code deduped on extraMetadata()['filename'] but saved under
+            // extraMetadata()['name'], so the check never matched. Use one value.
+            $name = $file->extraMetadata()['name'] ?? null;
+
+            if (! is_string($name) || $name === '') {
+                continue;
+            }
+
+            if (self::existRecord($name)) {
+                continue;
+            }
+
+            try {
+                $fileContent = \Yaza\LaravelGoogleDriveStorage\Gdrive::get($file->path());
+
+                if (! $fileContent) {
+                    continue;
                 }
+
+                if (! Storage::put('sync/'.$name, $fileContent->file)) {
+                    continue;
+                }
+
+                self::import(Storage::path('sync/'.$name), $name);
+                $queued++;
+            } catch (Throwable $e) {
+                Log::error('Google Drive sync failed for a file.', [
+                    'file' => $name,
+                    'error' => $e->getMessage(),
+                ]);
             }
         }
+
+        return $queued;
     }
 
-    public static function existRecord($fileName) : bool
+    public static function existRecord(string $fileName): bool
     {
         return History::where('filename', $fileName)->exists();
     }
 
-    public static function import(string $filePath)
+    public static function import(string $filePath, string $filename): void
     {
-        $pathInfo = pathinfo($filePath);
-        $parser = new Parser();
-        $pdf = $parser->parseFile($filePath);
-
-        $text = $pdf->getText();
-
-        $data = $pdf->getPages()[0]->getDataTm();
-
-        $shopId = 1;
-        $cart = [
-            'shop_id' => $shopId
-        ];
-        $matches = [];
-        preg_match('/\b\d{1,2}\.\d{1,2}\.\d{4}\b/m', $data[7][1], $matches);
-        if (isset($matches[0])) {
-            $cart['date'] = $matches[0];
-        }
-        $i = 11;
-        do {
-            $ext = false;
-            if (isset($data[$i][1])) {
-                $res = preg_match_all('/^(.+?)\s{2,}([\d,]+) $/m', $data[$i][1], $matches, PREG_SET_ORDER, 0);
-                if ($res && isset($matches[0][1]) && isset($matches[0][2])) {
-                    $name = $matches[0][1];
-                    $price = (float)str_replace(',', '.', $matches[0][2]);
-                }
-                $amount = 1;
-                $unit = 'kpl';
-                $priceUnit = $price;
-                $res = preg_match_all('/^\s*(\d+(?:\,\d+)?)\s*KG\s*(\d+(?:\,\d+)?)\s*€\/KG/', $data[$i + 1][1], $matches, PREG_SET_ORDER, 0);
-                if ($res && isset($matches[0][1]) && isset($matches[0][2])) {
-                    $amount = (float)str_replace(',', '.', $matches[0][1]);
-                    $priceUnit = (float)str_replace(',', '.', $matches[0][2]);
-                    $unit = 'kg';
-                    $ext = true;
-                }
-                $res = preg_match_all('/^\s*(\d+(?:\,\d+)?)\s*KPL\s*(\d+(?:\,\d+)?)\s*€\/KPL/', $data[$i + 1][1], $matches, PREG_SET_ORDER, 0);
-                if ($res && isset($matches[0][1]) && isset($matches[0][2])) {
-                    $amount = (float)str_replace(',', '.', $matches[0][1]);
-                    $priceUnit = (float)str_replace(',', '.', $matches[0][2]);
-                    $unit = 'kpl';
-                    $ext = true;
-                }
-                $item = [
-                    'name' => $name,
-                    'price' => $price,
-                    'amount' => $amount,
-                    'priceUnit' => $priceUnit,
-                    'unit' => $unit
-                ];
-                $cart['products'][] = $item;
-                if ($ext) {
-                    $i++;
-                }
-            }
-            $i++;
-            $aa = 10;
-        } while (!str_contains($data[$i][1], '-------'));
-
-        if (!empty($cart['products'])) {
-            Log::debug($cart);
-//            ProductRepository::productsSave($cart, $pathInfo['filename']);
-        }
+        ProcessReceipt::dispatch($filePath, $filename);
     }
 }
