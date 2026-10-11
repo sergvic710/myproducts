@@ -71,9 +71,14 @@ class ProductRepositoryTest extends TestCase
             items: [new ParsedItem('MYSTERY ITEM', 'Space Food', 'kpl', 1, 1.99, 1.99)],
         );
 
+        $before = Category::count();
+
         $this->repository->saveReceipt($receipt, 'receipt.pdf');
 
-        $this->assertDatabaseCount('categories', 2);
+        // The claim is that "Space Food" was not created, not that the table
+        // holds two rows — migrations seed categories of their own.
+        $this->assertSame($before, Category::count());
+        $this->assertDatabaseMissing('categories', ['name' => 'Space Food']);
         $this->assertSame('default', Product::where('name', 'MYSTERY ITEM')->firstOrFail()->category->name);
     }
 

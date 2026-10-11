@@ -18,6 +18,11 @@ class MetricsService
      * Sums `total`, the line total actually charged, not `price * amount` —
      * `price` is the unit price, so a weighed or discounted line disagrees.
      *
+     * whereDate rather than whereBetween on datetime bounds: `histories.date`
+     * is a timestamp holding midnight, and sqlite compares it as a string, so
+     * '2026-09-01' sorts below '2026-09-01 00:00:00' and the first day of the
+     * month vanishes from the total.
+     *
      * @return array<string, float> category name => amount, largest first
      */
     public static function getTotalSumByCategory(?Carbon $date = null): array
@@ -32,7 +37,8 @@ class MetricsService
         $rows = History::query()
             ->join('products', 'products.id', '=', 'histories.product_id')
             ->leftJoin('categories', 'categories.id', '=', 'products.category_id')
-            ->whereBetween('histories.date', [$dateStart, $dateEnd])
+            ->whereDate('histories.date', '>=', $dateStart->toDateString())
+            ->whereDate('histories.date', '<=', $dateEnd->toDateString())
             ->groupBy('categories.name')
             ->selectRaw('categories.name as name, SUM(histories.total) as total')
             ->get();
