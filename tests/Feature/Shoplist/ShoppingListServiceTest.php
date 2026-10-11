@@ -321,6 +321,90 @@ class ShoppingListServiceTest extends TestCase
     /**
      * @param  list<string>  $dates
      */
+    public function test_a_basket_discount_is_never_predicted(): void
+    {
+        // The parser has to return "Lidl Plus -saastosi" as its own line or the
+        // line totals stop adding up to the receipt total. It is not a product,
+        // and before it was filtered out it was the most regular item in the
+        // shop — due every five days, at the top of the list.
+        $this->discounted('Lidl Plus -saastosi', ['2026-09-01', '2026-09-08', '2026-09-15']);
+
+        $list = $this->service->due($this->day('2026-09-25'));
+
+        $this->assertSame(0, $list->candidateCount);
+        $this->assertTrue($list->isEmpty());
+    }
+
+    public function test_a_product_bought_at_a_discount_is_still_predicted(): void
+    {
+        // is_discount is set on a real product with a discount folded into it
+        // too, so the flag cannot be the discriminator — only the sign can.
+        $product = $this->bought('Milk', ['2026-09-01', '2026-09-08']);
+        History::create([
+            'product_id' => $product->id,
+            'shop_id' => $this->shop->id,
+            'amount' => 1,
+            'price' => 1.79,
+            'total' => 1.43,
+            'is_discount' => 1,
+            'discount_price' => 0.36,
+            'date' => '2026-09-15',
+            'filename' => 'discounted.pdf',
+        ]);
+
+        $list = $this->service->due($this->day('2026-09-25'));
+
+        $this->assertSame(1, $list->candidateCount);
+        $this->assertCount(1, $list->overdue);
+        $this->assertSame(7, $list->overdue[0]->intervalDays);
+    }
+
+    public function test_a_discount_line_does_not_stretch_a_real_products_interval(): void
+    {
+        // The filter has to hold in purchaseDates() as well as candidates():
+        // a product that qualifies on its purchases alone must not then pick
+        // up the dates of its discount rows.
+        $product = $this->bought('Milk', ['2026-09-01', '2026-09-08', '2026-09-15']);
+        History::create([
+            'product_id' => $product->id,
+            'shop_id' => $this->shop->id,
+            'amount' => 1,
+            'price' => -2.00,
+            'total' => -2.00,
+            'is_discount' => 1,
+            'date' => '2026-07-01',
+            'filename' => 'basket-discount.pdf',
+        ]);
+
+        $list = $this->service->due($this->day('2026-09-25'));
+
+        // Weekly, not stretched by the July row.
+        $this->assertSame(7, $list->overdue[0]->intervalDays);
+    }
+
+    private function discounted(string $name, array $dates): void
+    {
+        $product = Product::create([
+            'name' => $name,
+            'category_id' => $this->category->id,
+            'unit_id' => $this->unit->id,
+        ]);
+
+        foreach ($dates as $date) {
+            History::create([
+                'product_id' => $product->id,
+                'shop_id' => $this->shop->id,
+                'amount' => 1,
+                'price' => -1.00,
+                'total' => -1.00,
+                'is_discount' => 1,
+                'discount_price' => 1.00,
+                'date' => $date,
+                'filename' => 'receipt_'.(++$this->line).'.pdf',
+            ]);
+        }
+    }
+
     private function bought(string $name, array $dates): Product
     {
         $product = Product::create([

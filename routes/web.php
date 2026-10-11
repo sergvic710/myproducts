@@ -16,7 +16,7 @@ Route::middleware('auth')->group(function () {
     Route::Resource('unit', \App\Http\Controllers\Unit\UnitController::class);
     Route::Resource('shop', \App\Http\Controllers\Shop\ShopController::class);
     Route::Resource('history', \App\Http\Controllers\History\HistoryController::class);
-    Route::get('/', [\App\Http\Controllers\Product\ProductController::class, 'index'])->name('dashboard');
+    Route::get('/', [\App\Http\Controllers\Dashboard\DashboardController::class, 'index'])->name('dashboard');
 });
 
 require __DIR__.'/auth.php';
