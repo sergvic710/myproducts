@@ -95,3 +95,17 @@ jobs:
              && git fetch origin main \
              && git checkout -q '${{ github.sha }}' -- scripts/deploy.sh \
              && DEPLOY_EXEC='${{ vars.DEPLOY_EXEC }}' bash scripts/deploy.sh '${{ github.sha }}'"
+
+      # /up is Laravel's health route (bootstrap/app.php); it returns 200 only
+      # when the app boots, so a broken deploy fails the workflow here.
+      - name: Smoke test
+        env:
+          APP_URL: ${{ vars.APP_URL || 'https://groceapp.codetandem.com' }}
+        run: |
+          for i in 1 2 3 4 5 6; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "$APP_URL/up" || true)
+            echo "Attempt $i: $APP_URL/up -> $code"
+            [ "$code" = "200" ] && exit 0
+            sleep 10
+          done
+          exit 1

@@ -49,7 +49,9 @@ The app runs in Docker with MariaDB. The DB host is `db`, user `superuser`. Use 
 `.github/workflows/deploy.yml` runs on every push to `main` (and by hand via *Run workflow*):
 
 1. **test** — PHP 8.4, `php artisan test tests/Unit tests/Feature/Receipt` (the stock Breeze tests are skipped, see Known Issues).
-2. **deploy** (only if tests pass, GitHub environment `production`) — builds Vite assets, rsyncs `public/build/` to the server, then runs `scripts/deploy.sh <sha>` over SSH.
+2. **deploy** (only if tests pass, GitHub environment `production`) — builds Vite assets, rsyncs `public/build/` to the server, runs `scripts/deploy.sh <sha>` over SSH, then smoke-tests `<APP_URL>/up` (repository variable `APP_URL`, default `https://groceapp.codetandem.com`).
+
+Production: https://groceapp.codetandem.com/
 
 `scripts/deploy.sh` runs in the app checkout on the server: maintenance mode → `git reset --hard <sha>` → `composer install --no-dev` → `migrate --force` → `optimize` + `filament:optimize` → `storage:link` → `queue:restart` → up. On failure it brings the app back up. It can also be run by hand: `bash scripts/deploy.sh` deploys `origin/main`.
 
