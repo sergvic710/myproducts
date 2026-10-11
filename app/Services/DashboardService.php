@@ -145,8 +145,13 @@ final class DashboardService
      */
     private function monthTotals(CarbonImmutable $month): array
     {
+        // whereDate, not whereBetween on datetime bounds. The column is a
+        // timestamp holding midnight and sqlite compares it as a string, where
+        // '2026-09-01' sorts BELOW '2026-09-01 00:00:00' — the first day of the
+        // month drops out silently, and only on sqlite.
         $row = History::query()
-            ->whereBetween('date', [$month->startOfMonth(), $month->endOfMonth()])
+            ->whereDate('date', '>=', $month->startOfMonth()->toDateString())
+            ->whereDate('date', '<=', $month->endOfMonth()->toDateString())
             ->selectRaw('COUNT(*) as items, SUM(total) as total, COUNT(DISTINCT filename) as receipts')
             ->first();
 

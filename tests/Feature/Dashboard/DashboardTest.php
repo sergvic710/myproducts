@@ -177,9 +177,10 @@ class DashboardTest extends TestCase
         $this->line('Milk', '2026-09-04', 2.50, 'skipped.pdf');
         $this->line('Milk', '2026-09-05', 2.50, 'never.pdf');
 
-        WalletRecord::create(['filename' => 'pushed.pdf', 'status' => WalletRecord::CREATED]);
+        // amount and record_date are NOT NULL on wallet_records.
+        $this->walletRecord('pushed.pdf', WalletRecord::CREATED, '2026-09-03');
         // A shop with no Wallet template is settled, not pending.
-        WalletRecord::create(['filename' => 'skipped.pdf', 'status' => WalletRecord::SKIPPED]);
+        $this->walletRecord('skipped.pdf', WalletRecord::SKIPPED, '2026-09-04');
 
         $pipeline = $this->service->pipeline();
 
@@ -207,12 +208,27 @@ class DashboardTest extends TestCase
     {
         $this->line('Milk', '2026-09-03', 2.50, 'a.pdf', 'Dairy');
 
+        // The CI test job never builds the assets — that happens in the deploy
+        // job — so @vite in layouts.main would throw on a missing manifest.
+        $this->withoutVite();
+
         $response = $this->actingAs(User::factory()->create())->get(route('dashboard'));
 
         $response->assertOk();
         $response->assertSee('Spending by category');
         $response->assertSee('Time to buy');
         $response->assertSee('Latest receipts');
+    }
+
+    private function walletRecord(string $filename, string $status, string $date): void
+    {
+        WalletRecord::create([
+            'filename' => $filename,
+            'shop_id' => $this->shop->id,
+            'amount' => 2.50,
+            'record_date' => $date,
+            'status' => $status,
+        ]);
     }
 
     private function line(string $product, string $date, float $total, string $filename, string $category = 'default'): void
