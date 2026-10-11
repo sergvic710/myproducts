@@ -7,6 +7,9 @@
 # CI (.github/workflows/deploy.yml) calls it over SSH with the merged commit
 # SHA after uploading the built Vite assets to public/build. Run by hand with
 # no argument to deploy the tip of origin/main.
+#
+# Panels like Hestia install several PHP versions and a per-user Composer, so
+# the binaries can be pinned: PHP_BIN=/usr/bin/php8.4 COMPOSER_BIN=~/.composer/composer
 
 set -euo pipefail
 
@@ -15,12 +18,19 @@ BRANCH="${DEPLOY_BRANCH:-main}"
 
 cd "$(dirname "$0")/.."
 
-log() { echo "==> $*"; }
+PHP_BIN="${PHP_BIN:-php}"
+COMPOSER_BIN="${COMPOSER_BIN:-$(command -v composer || echo "$HOME/.composer/composer")}"
+
+php()      { command "$PHP_BIN" "$@"; }
+composer() { command "$PHP_BIN" "$COMPOSER_BIN" "$@"; }
+log()      { echo "==> $*"; }
 
 if [ ! -f .env ]; then
     echo ".env is missing in $(pwd); create it before the first deploy." >&2
     exit 1
 fi
+
+log "Using $("$PHP_BIN" -r 'echo PHP_BINARY, " ", PHP_VERSION;'), composer at $COMPOSER_BIN"
 
 log "Fetching $BRANCH"
 git fetch --prune origin "$BRANCH"

@@ -57,7 +57,7 @@ Production: https://groceapp.codetandem.com/
 
 Repository secrets: `SSH_HOST`, `SSH_USER`, `SSH_PRIVATE_KEY`, `DEPLOY_PATH` (absolute path of the checkout), optional `SSH_PORT` (default 22) and `SSH_KNOWN_HOSTS` (otherwise `ssh-keyscan` is used).
 
-The server runs PHP directly (no Docker); its PHP must be 8.4+ to satisfy `composer.lock`. One-time server setup: clone the repo to `DEPLOY_PATH` with a remote the server can `git fetch` (deploy key), create `.env` (`APP_ENV=production`, `APP_DEBUG=false`, `APP_KEY`, DB, `QUEUE_CONNECTION=database`, …), add the CI public key to the deploy user's `authorized_keys`, and keep a queue worker running under a supervisor (`php artisan queue:work`) — `queue:restart` only signals workers to reload.
+The server is managed by HestiaCP and runs PHP directly (no Docker); deploy as the Hestia user that owns the site (PHP-FPM runs as that user, so no permission fixes are needed). PHP must be 8.4+ to satisfy `composer.lock`. Hestia ships several PHP versions and a per-user Composer, so repository variables `PHP_BIN` (e.g. `/usr/bin/php8.4`) and `COMPOSER_BIN` (e.g. `/home/<user>/.composer/composer`) pin them; the defaults are `php` and `composer` from PATH. Run the queue worker as a Hestia cron job every minute: `cd <DEPLOY_PATH> && /usr/bin/php8.4 artisan queue:work --stop-when-empty --max-time=55`. One-time server setup: clone the repo to `DEPLOY_PATH` with a remote the server can `git fetch` (deploy key), create `.env` (`APP_ENV=production`, `APP_DEBUG=false`, `APP_KEY`, DB, `QUEUE_CONNECTION=database`, …), add the CI public key to the deploy user's `authorized_keys`.
 
 ## Architecture
 

@@ -94,7 +94,7 @@ jobs:
             "cd '${{ secrets.DEPLOY_PATH }}' \
              && git fetch origin main \
              && git checkout -q '${{ github.sha }}' -- scripts/deploy.sh \
-             && bash scripts/deploy.sh '${{ github.sha }}'"
+             && PHP_BIN='${{ vars.PHP_BIN }}' COMPOSER_BIN='${{ vars.COMPOSER_BIN }}' bash scripts/deploy.sh '${{ github.sha }}'"
 
       # /up is Laravel's health route (bootstrap/app.php); it returns 200 only
       # when the app boots, so a broken deploy fails the workflow here.
