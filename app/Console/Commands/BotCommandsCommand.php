@@ -31,6 +31,7 @@ class BotCommandsCommand extends Command
         'start' => 'How to use this bot',
         'shoplist' => 'What to buy next, from your purchase history',
         'receipt' => 'Send a receipt for me to read',
+        'checkhistory' => 'Wallet expenses with no receipt saved',
     ];
 
     public function handle(): int

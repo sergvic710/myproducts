@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
+use App\Jobs\Concerns\NotifiesTelegram;
 use App\Models\History;
 use App\Repositories\ProductRepository;
 use App\Services\Parser\AiReceiptParser;
-use DefStudio\Telegraph\Models\TelegraphChat;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -22,6 +22,7 @@ use Throwable;
  */
 class ProcessReceipt implements ShouldQueue
 {
+    use NotifiesTelegram;
     use Queueable;
 
     public int $tries = 3;
@@ -64,6 +65,16 @@ class ProcessReceipt implements ShouldQueue
             'total' => $receipt->total,
         ]);
 
+        // A separate job, so a Wallet outage can never touch a saved receipt.
+        PushReceiptToWallet::dispatch(
+            $this->filename,
+            $receipt->shop,
+            $receipt->date->toDateString(),
+            $receipt->total,
+            $saved,
+            $this->telegraphChatId,
+        );
+
         $this->notify(sprintf(
             'Saved %d items — %.2f EUR (%s, %s)',
             $saved,
@@ -81,25 +92,5 @@ class ProcessReceipt implements ShouldQueue
         ]);
 
         $this->notify('Could not read this receipt: '.($e?->getMessage() ?? 'unknown error'));
-    }
-
-    private function notify(string $text): void
-    {
-        if ($this->telegraphChatId === null) {
-            return;
-        }
-
-        $chat = TelegraphChat::find($this->telegraphChatId);
-
-        if (! $chat) {
-            return;
-        }
-
-        try {
-            $chat->message($text)->send();
-        } catch (Throwable $e) {
-            // A failed reply must not fail the job — the data is already saved.
-            Log::warning('Could not send the Telegram reply.', ['error' => $e->getMessage()]);
-        }
     }
 }

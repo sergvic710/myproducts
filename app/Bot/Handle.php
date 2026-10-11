@@ -5,15 +5,23 @@ declare(strict_types=1);
 namespace App\Bot;
 
 use App\DataObjects\DueProduct;
+use App\DataObjects\ReconciliationReport;
 use App\DataObjects\ShoppingList;
+use App\DataObjects\WalletExpense;
+use App\Exceptions\WalletException;
 use App\Jobs\ProcessReceipt;
 use App\Models\History;
 use App\Services\ShoppingListService;
+use App\Services\Wallet\BudgetBakersClient;
+use App\Services\Wallet\ReconciliationService;
+use Carbon\CarbonImmutable;
+use DefStudio\Telegraph\DTO\Photo;
 use DefStudio\Telegraph\Handlers\WebhookHandler;
 use DefStudio\Telegraph\Keyboard\Button;
 use DefStudio\Telegraph\Keyboard\Keyboard;
 use DefStudio\Telegraph\Keyboard\ReplyButton;
 use DefStudio\Telegraph\Keyboard\ReplyKeyboard;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Stringable;
@@ -30,6 +38,8 @@ class Handle extends WebhookHandler
     private const MENU_SHOPLIST = 'Shopping list';
 
     private const MENU_RECEIPT = 'Receipt';
+
+    private const MENU_CHECK = 'Check history';
 
     /**
      * Also where the menu gets installed: a reply keyboard arrives attached to
@@ -116,6 +126,58 @@ class Handle extends WebhookHandler
         $this->render($service->due());
     }
 
+    /**
+     * Groceries paid for in Wallet with no receipt saved here.
+     *
+     * The parameter is Telegraph's, not ours — a command is always called with
+     * whatever was typed after it. The range comes from the buttons.
+     */
+    public function checkhistory(string $parameter = ''): void
+    {
+        if (! $this->isKnownChat()) {
+            $this->reply('Unknown command. Send me a receipt as a PDF file or as a photo.');
+
+            return;
+        }
+
+        $this->chat
+            ->message('Wallet against receipts — how far back should I look?')
+            ->keyboard($this->rangeKeyboard())
+            ->send();
+    }
+
+    /**
+     * The range buttons' callback action.
+     *
+     * Public because Telegraph dispatches callbacks to public methods, which
+     * means /checkdays exists as a typed command too — the same quirk as
+     * /snooze, and harmless for the same reasons. It is not advertised.
+     */
+    public function checkdays(string $d = ''): void
+    {
+        if (! $this->isKnownChat()) {
+            $this->reply('Unknown command. Send me a receipt as a PDF file or as a photo.');
+
+            return;
+        }
+
+        $days = (int) $d;
+
+        // An allowlist rather than a cast, so a button left over from an older
+        // message cannot ask for a decade of records.
+        if (! in_array($days, $this->ranges(), true)) {
+            $this->reply('That range is no longer offered. Send /checkhistory.');
+
+            return;
+        }
+
+        // Answer the tap before going near the network, or the button sits
+        // there spinning for as long as Wallet takes.
+        $this->reply('Checking Wallet…');
+
+        $this->runCheck($days);
+    }
+
     protected function handleUnknownCommand(Stringable $message): void
     {
         $this->reply('Unknown command. Send me a receipt as a PDF file or as a photo.');
@@ -139,6 +201,10 @@ class Handle extends WebhookHandler
                 $this->receipt();
 
                 return;
+            case self::MENU_CHECK:
+                $this->checkhistory();
+
+                return;
         }
 
         $document = $this->message?->document();
@@ -152,18 +218,32 @@ class Handle extends WebhookHandler
             return;
         }
 
-        $filename = $this->filename($document?->filename(), $attachment->id());
-
-        if (History::where('filename', $filename)->exists()) {
-            $this->chat->message('This receipt is already saved.')->send();
-
-            return;
-        }
-
         $disk = Storage::disk((string) config('receipts.disk'));
         $directory = $disk->path((string) config('receipts.path'));
 
-        $storedPath = $this->bot->store($attachment, $directory, $filename);
+        // A document carries its own name, which is the same every time the
+        // same file is sent, so it can be checked before spending a download.
+        if ($document !== null) {
+            $filename = $this->filename($document->filename(), $document->id());
+
+            if (History::where('filename', $filename)->exists()) {
+                $this->chat->message('This receipt is already saved.')->send();
+
+                return;
+            }
+
+            $storedPath = $this->bot->store($attachment, $directory, $filename);
+        } else {
+            $filename = $this->storePhoto($attachment, $directory);
+
+            if ($filename === null) {
+                $this->chat->message('This receipt is already saved.')->send();
+
+                return;
+            }
+
+            $storedPath = $directory.'/'.$filename;
+        }
 
         $this->chat->message('Receipt received. Reading it now…')->send();
 
@@ -171,9 +251,59 @@ class Handle extends WebhookHandler
     }
 
     /**
-     * Documents keep their own name. Photos have none, so derive a stable name
-     * from the Telegram file id — the same photo then always maps to the same
-     * filename, which is what makes the pipeline idempotent.
+     * Download a photo and name it after what is in it, not where it came from.
+     *
+     * Telegram issues a fresh file id every time the same picture is sent, so a
+     * name derived from the id makes a re-send look like a new receipt — that
+     * is how two byte-identical Lidl photos ended up counted twice. Hashing the
+     * bytes makes the name stable across re-sends, which in turn makes every
+     * existing check work, since `filename` is already the dedupe key in
+     * histories, wallet_records and ProcessReceipt.
+     *
+     * Returns null when this exact picture is already saved.
+     */
+    private function storePhoto(Photo $photo, string $directory): ?string
+    {
+        // Deterministic, so a retried webhook overwrites its own partial
+        // download instead of littering the directory.
+        $incoming = 'incoming_'.substr(sha1($photo->id()), 0, 16).'.jpg';
+        $incomingPath = $this->bot->store($photo, $directory, $incoming);
+
+        $hash = is_file($incomingPath) ? sha1_file($incomingPath) : false;
+
+        if ($hash === false) {
+            // Nothing to hash. Fall back to the old id-derived name rather than
+            // dropping a receipt somebody just sent.
+            return $this->filename(null, $photo->id());
+        }
+
+        $filename = 'photo_'.substr($hash, 0, 32).'.jpg';
+        $finalPath = $directory.'/'.$filename;
+
+        if (History::where('filename', $filename)->exists()) {
+            @unlink($incomingPath);
+
+            return null;
+        }
+
+        // The same bytes may already be on disk from an upload whose parse
+        // never finished. Keep that copy and let this one go.
+        if (is_file($finalPath)) {
+            @unlink($incomingPath);
+
+            return $filename;
+        }
+
+        rename($incomingPath, $finalPath);
+
+        return $filename;
+    }
+
+    /**
+     * Documents keep their own name.
+     *
+     * The file-id fallback is only reached when a photo cannot be hashed; see
+     * storePhoto(), which names a picture after its contents.
      */
     private function filename(?string $documentName, string $fileId): string
     {
@@ -222,6 +352,20 @@ class Handle extends WebhookHandler
         }
 
         $this->chat->message($text)->keyboard($keyboard)->send();
+    }
+
+    /**
+     * Same edit-in-place rule as render(), for output that is already a string.
+     */
+    private function renderText(string $text): void
+    {
+        if (isset($this->callbackQueryId)) {
+            $this->chat->edit($this->messageId)->message($text)->keyboard($this->rangeKeyboard())->send();
+
+            return;
+        }
+
+        $this->chat->message($text)->keyboard($this->rangeKeyboard())->send();
     }
 
     private function format(ShoppingList $list): string
@@ -325,12 +469,179 @@ class Handle extends WebhookHandler
     private function menu(): ReplyKeyboard
     {
         return ReplyKeyboard::make()
+            // Two rows rather than three across: "Check history" is the long
+            // label, and three on one line wraps to unreadable on a phone.
             ->row([
                 ReplyButton::make(self::MENU_SHOPLIST),
                 ReplyButton::make(self::MENU_RECEIPT),
             ])
+            ->row([
+                ReplyButton::make(self::MENU_CHECK),
+            ])
             ->resize()
             ->persistent();
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function ranges(): array
+    {
+        return array_values(array_map(intval(...), (array) config('checkhistory.ranges')));
+    }
+
+    private function rangeKeyboard(): Keyboard
+    {
+        return Keyboard::make()->row(array_map(
+            static fn (int $days): Button => Button::make($days.' days')
+                ->action('checkdays')
+                ->param('d', $days),
+            $this->ranges(),
+        ));
+    }
+
+    /**
+     * Note this asks isConfigured(), not budgetbakers.enabled. That flag turns
+     * *pushing* off, and this reads — in fact a check is at its most useful
+     * exactly when pushing is off, because then it is the only thing telling
+     * you what Wallet knows that the app does not.
+     */
+    private function runCheck(int $days): void
+    {
+        if (! app(BudgetBakersClient::class)->isConfigured()) {
+            $this->renderText('Wallet is not connected. Set BUDGETBAKERS_TOKEN.');
+
+            return;
+        }
+
+        try {
+            $report = app(ReconciliationService::class)->check($days);
+        } catch (WalletException $e) {
+            Log::warning('Could not check Wallet history.', ['error' => $e->getMessage()]);
+
+            $this->renderText('Could not check Wallet: '.$this->escape($e->getMessage()));
+
+            return;
+        }
+
+        $this->renderText($this->formatReport($report));
+    }
+
+    private function formatReport(ReconciliationReport $report): string
+    {
+        $since = $report->since->format('j M');
+
+        if ($report->total() === 0) {
+            return sprintf('No Groceries expenses in Wallet since %s.', $since);
+        }
+
+        if ($report->isClean()) {
+            return sprintf('All %d Groceries expenses since %s have a receipt.', $report->total(), $since);
+        }
+
+        $lines = [
+            '<b>Wallet against receipts</b>',
+            sprintf(
+                'Since %s — %d Groceries expenses, %d with a receipt.',
+                $since,
+                $report->total(),
+                count($report->matched),
+            ),
+        ];
+
+        if ($report->missing !== []) {
+            $lines[] = '';
+            $lines[] = sprintf(
+                '<b>No receipt (%d) — %.2f EUR</b>',
+                count($report->missing),
+                $report->missingTotal(),
+            );
+
+            $seen = [];
+            $max = (int) config('checkhistory.max_lines');
+
+            foreach (array_slice($report->missing, 0, $max) as $expense) {
+                $key = $expense->shopId.'|'.$expense->date;
+                $seen[$key] = ($seen[$key] ?? 0) + 1;
+
+                $lines[] = $this->missingLine($expense, $seen[$key]);
+            }
+
+            if (count($report->missing) > $max) {
+                $lines[] = sprintf('…and %d more.', count($report->missing) - $max);
+            }
+        }
+
+        if ($report->unknownShop !== []) {
+            $lines[] = '';
+            $lines[] = sprintf('<b>Unknown payee (%d)</b>', count($report->unknownShop));
+
+            foreach ($report->unknownByPayee() as $row) {
+                $lines[] = sprintf(
+                    '%s — %d expenses, %.2f EUR',
+                    $this->escape($row['payee']),
+                    $row['count'],
+                    $row['total'],
+                );
+            }
+
+            $lines[] = 'Set a Wallet payee on the matching shop, or add the shop.';
+        }
+
+        foreach ($report->ambiguousPayees as $payee) {
+            $lines[] = sprintf('"%s" is claimed by two shops — check Shops.', $this->escape($payee));
+        }
+
+        if ($report->matched !== []) {
+            $lines[] = '';
+            $lines[] = sprintf('%d matched a receipt.', count($report->matched));
+        }
+
+        return $this->fit($lines);
+    }
+
+    private function missingLine(WalletExpense $expense, int $nthThatDay): string
+    {
+        return sprintf(
+            '%s — %s — %.2f%s',
+            CarbonImmutable::parse($expense->date)->format('j M'),
+            $this->escape($expense->label()),
+            $expense->amount,
+            // Two expenses at one shop on one day is not a duplicate report,
+            // it is a second trip. Saying so stops it reading as a bug.
+            $nthThatDay > 1 ? sprintf(' (%d%s that day)', $nthThatDay, $this->ordinal($nthThatDay)) : '',
+        );
+    }
+
+    private function ordinal(int $n): string
+    {
+        return match (true) {
+            $n % 100 >= 11 && $n % 100 <= 13 => 'th',
+            $n % 10 === 1 => 'st',
+            $n % 10 === 2 => 'nd',
+            $n % 10 === 3 => 'rd',
+            default => 'th',
+        };
+    }
+
+    /**
+     * Telegram counts characters and max_lines counts lines, so the line cap
+     * alone cannot promise anything — payee names are whatever Wallet holds.
+     * Drop lines off the end until it fits, keeping the tail note honest.
+     *
+     * @param  list<string>  $lines
+     */
+    private function fit(array $lines): string
+    {
+        $limit = (int) config('checkhistory.char_limit');
+        $text = implode("\n", $lines);
+
+        while (mb_strlen($text) > $limit && count($lines) > 3) {
+            array_splice($lines, -1);
+            $text = implode("\n", $lines)."\n…trimmed to fit.";
+        }
+
+        return $text;
     }
 
     /**

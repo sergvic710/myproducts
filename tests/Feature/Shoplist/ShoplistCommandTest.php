@@ -170,6 +170,7 @@ class ShoplistCommandTest extends TestCase
             'reply_markup' => [
                 'keyboard' => [
                     [['text' => 'Shopping list'], ['text' => 'Receipt']],
+                    [['text' => 'Check history']],
                 ],
                 'is_persistent' => true,
                 'resize_keyboard' => true,
@@ -186,6 +187,7 @@ class ShoplistCommandTest extends TestCase
             'reply_markup' => [
                 'keyboard' => [
                     [['text' => 'Shopping list'], ['text' => 'Receipt']],
+                    [['text' => 'Check history']],
                 ],
                 'is_persistent' => true,
                 'resize_keyboard' => true,
@@ -209,6 +211,13 @@ class ShoplistCommandTest extends TestCase
         $this->text('Receipt');
 
         Telegraph::assertSent('Send the receipt now', exact: false);
+    }
+
+    public function test_the_check_history_button_runs_the_command(): void
+    {
+        $this->text('Check history');
+
+        Telegraph::assertSent('how far back', exact: false);
     }
 
     public function test_ordinary_text_still_gets_the_upload_hint(): void
