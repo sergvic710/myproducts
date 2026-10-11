@@ -7,21 +7,15 @@
 # CI (.github/workflows/deploy.yml) calls it over SSH with the merged commit
 # SHA after uploading the built Vite assets to public/build. Run by hand with
 # no argument to deploy the tip of origin/main.
-#
-# If PHP/Composer live inside a container, set DEPLOY_EXEC to the prefix that
-# reaches them, e.g. DEPLOY_EXEC="docker compose exec -T www".
 
 set -euo pipefail
 
 REF="${1:-origin/main}"
 BRANCH="${DEPLOY_BRANCH:-main}"
-EXEC="${DEPLOY_EXEC:-}"
 
 cd "$(dirname "$0")/.."
 
-php()      { $EXEC php "$@"; }
-composer() { $EXEC composer "$@"; }
-log()      { echo "==> $*"; }
+log() { echo "==> $*"; }
 
 if [ ! -f .env ]; then
     echo ".env is missing in $(pwd); create it before the first deploy." >&2

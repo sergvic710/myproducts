@@ -55,9 +55,9 @@ Production: https://groceapp.codetandem.com/
 
 `scripts/deploy.sh` runs in the app checkout on the server: maintenance mode → `git reset --hard <sha>` → `composer install --no-dev` → `migrate --force` → `optimize` + `filament:optimize` → `storage:link` → `queue:restart` → up. On failure it brings the app back up. It can also be run by hand: `bash scripts/deploy.sh` deploys `origin/main`.
 
-Repository secrets: `SSH_HOST`, `SSH_USER`, `SSH_PRIVATE_KEY`, `DEPLOY_PATH` (absolute path of the checkout), optional `SSH_PORT` (default 22) and `SSH_KNOWN_HOSTS` (otherwise `ssh-keyscan` is used). Optional repository variable `DEPLOY_EXEC` — a prefix for php/composer when they run in a container, e.g. `docker compose exec -T www`.
+Repository secrets: `SSH_HOST`, `SSH_USER`, `SSH_PRIVATE_KEY`, `DEPLOY_PATH` (absolute path of the checkout), optional `SSH_PORT` (default 22) and `SSH_KNOWN_HOSTS` (otherwise `ssh-keyscan` is used).
 
-One-time server setup: clone the repo to `DEPLOY_PATH` with a remote the server can `git fetch` (deploy key), create `.env` (`APP_ENV=production`, `APP_DEBUG=false`, `APP_KEY`, DB, `QUEUE_CONNECTION=database`, …), add the CI public key to the deploy user's `authorized_keys`, and keep a queue worker running under a supervisor (`php artisan queue:work`) — `queue:restart` only signals workers to reload.
+The server runs PHP directly (no Docker); its PHP must be 8.4+ to satisfy `composer.lock`. One-time server setup: clone the repo to `DEPLOY_PATH` with a remote the server can `git fetch` (deploy key), create `.env` (`APP_ENV=production`, `APP_DEBUG=false`, `APP_KEY`, DB, `QUEUE_CONNECTION=database`, …), add the CI public key to the deploy user's `authorized_keys`, and keep a queue worker running under a supervisor (`php artisan queue:work`) — `queue:restart` only signals workers to reload.
 
 ## Architecture
 
