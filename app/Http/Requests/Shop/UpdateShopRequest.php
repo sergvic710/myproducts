@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Shop;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateShopRequest extends FormRequest
@@ -17,12 +18,17 @@ class UpdateShopRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         return [
             'name' => 'required|string|max:255',
+            // Stand in for the Wallet transaction template named after this
+            // shop — Wallet exposes no template API.
+            'wallet_account' => 'nullable|string|max:255',
+            'wallet_category' => 'nullable|string|max:255',
+            'wallet_payee' => 'nullable|string|max:255',
         ];
     }
 }

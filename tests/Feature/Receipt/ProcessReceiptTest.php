@@ -5,11 +5,16 @@ declare(strict_types=1);
 namespace Tests\Feature\Receipt;
 
 use App\Jobs\ProcessReceipt;
+use App\Jobs\PushReceiptToWallet;
 use App\Models\Category;
 use App\Models\History;
 use App\Models\Product;
 use App\Models\Shop;
+use App\Models\Unit;
+use App\Repositories\ProductRepository;
+use App\Services\Parser\AiReceiptParser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use Prism\Prism\Prism;
 use Prism\Prism\Testing\StructuredResponseFake;
 use Tests\TestCase;
@@ -31,17 +36,34 @@ class ProcessReceiptTest extends TestCase
         Prism::fake([$this->answer()]);
 
         (new ProcessReceipt($this->fixture(), 'receipt.pdf'))
-            ->handle(app(\App\Services\Parser\AiReceiptParser::class), app(\App\Repositories\ProductRepository::class));
+            ->handle(app(AiReceiptParser::class), app(ProductRepository::class));
 
         $this->assertDatabaseHas('histories', ['filename' => 'receipt.pdf']);
         $this->assertSame(1, Product::count());
+    }
+
+    public function test_it_hands_the_saved_receipt_to_wallet(): void
+    {
+        Prism::fake([$this->answer()]);
+        Queue::fake();
+
+        (new ProcessReceipt($this->fixture(), 'receipt.pdf'))
+            ->handle(app(AiReceiptParser::class), app(ProductRepository::class));
+
+        Queue::assertPushed(function (PushReceiptToWallet $job): bool {
+            return $job->filename === 'receipt.pdf'
+                && $job->shopName === 'Prisma'
+                && $job->date === '2025-09-21'
+                && $job->total === 1.62
+                && $job->itemCount === 1;
+        });
     }
 
     public function test_it_skips_a_receipt_that_is_already_saved(): void
     {
         $fake = Prism::fake([$this->answer()]);
 
-        $unit = \App\Models\Unit::create(['name' => 'kpl']);
+        $unit = Unit::create(['name' => 'kpl']);
         $category = Category::where('name', 'default')->firstOrFail();
         $shop = Shop::where('name', 'Prisma')->firstOrFail();
 
@@ -62,7 +84,7 @@ class ProcessReceiptTest extends TestCase
         ]);
 
         (new ProcessReceipt($this->fixture(), 'receipt.pdf'))
-            ->handle(app(\App\Services\Parser\AiReceiptParser::class), app(\App\Repositories\ProductRepository::class));
+            ->handle(app(AiReceiptParser::class), app(ProductRepository::class));
 
         // No API call and no extra rows.
         $fake->assertCallCount(0);

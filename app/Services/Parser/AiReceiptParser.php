@@ -8,6 +8,7 @@ use App\DataObjects\ParsedReceipt;
 use App\Exceptions\ReceiptParseException;
 use App\Models\Category;
 use App\Models\Shop;
+use Carbon\CarbonImmutable;
 use Prism\Prism\Enums\Provider;
 use Prism\Prism\Prism;
 use Prism\Prism\Schema\ArraySchema;
@@ -183,9 +184,16 @@ class AiReceiptParser
 
     private function systemPrompt(): string
     {
-        return <<<'TEXT'
+        // The model has no clock, so the year has to be given to it. Without
+        // this it read "11.09.26" as 2025 — matching the years that used to be
+        // written into the examples below rather than the digits on the paper.
+        $today = CarbonImmutable::now()->toDateString();
+
+        return <<<TEXT
         You read grocery receipts from Finnish stores (Prisma, Lidl, S-market and similar)
         and return them as structured data. The receipt can be a PDF or a photo.
+
+        Today is {$today}.
 
         Rules for reading:
 
@@ -194,8 +202,20 @@ class AiReceiptParser
           Match it to one of the allowed shop names.
         - The date can be ANYWHERE on the receipt, not only in the header. Some receipts
           print it only in the card payment block below the total. Search the whole
-          receipt for it. Formats vary: "21.9.2025", "24/10/2025", "24.10.25"
-          (a two-digit year means 20xx). Return it as YYYY-MM-DD.
+          receipt for it. Formats vary: "21.9.YYYY", "24/10/YYYY", "24.10.YY".
+          Return it as YYYY-MM-DD, and read the digits that are printed:
+
+            * A two-digit year is 20 followed by those two digits, whatever year
+              it happens to be now: "24.10.23" is 2023-10-24, "11.09.26" is
+              2026-09-11. Do not round it towards today and do not assume the
+              current year.
+            * Finnish receipts are day-first. "11.09.26" is 11 September, not
+              9 November.
+            * A receipt cannot be dated in the future. If what you read comes
+              out later than {$today}, you have misread a digit — look again.
+            * When the same date is printed more than once, prefer the one in
+              the card payment block at the bottom; it is machine-printed and
+              is the clearest on a photo.
         - A product line has the name on the left and the line total on the right:
           "BANAANI                    1,62"
         - The next line may hold the quantity and the unit price:

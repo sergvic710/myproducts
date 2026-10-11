@@ -66,9 +66,22 @@ final readonly class ParsedReceipt
         }
 
         try {
-            return CarbonImmutable::parse(trim($value))->startOfDay();
+            $date = CarbonImmutable::parse(trim($value))->startOfDay();
         } catch (\Throwable $e) {
             throw new ReceiptParseException("Could not read the receipt date \"{$value}\".", 0, $e);
         }
+
+        // Nothing was ever bought tomorrow. A date ahead of today means a digit
+        // was misread, and saving it would put the receipt somewhere no report
+        // will ever look for it. Note this cannot catch the opposite mistake —
+        // a year read one too low is a perfectly plausible old receipt — which
+        // is why the model is told today's date rather than left to guess.
+        if ($date->isAfter(CarbonImmutable::now()->endOfDay())) {
+            throw new ReceiptParseException(
+                sprintf('The receipt date "%s" is in the future.', $date->toDateString())
+            );
+        }
+
+        return $date;
     }
 }
