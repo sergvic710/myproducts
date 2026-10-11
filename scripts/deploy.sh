@@ -70,8 +70,12 @@ php artisan up
 # URL. Done after `up` and allowed to fail: the code is already live, and a
 # Telegram outage must not mark a good deploy as broken. Pending updates are
 # kept, so messages sent during maintenance are still delivered.
+# The command prints the Telegram API URL, which embeds the bot token; mask it
+# so the token never lands in the CI log.
 log "Registering Telegram webhook"
-php artisan telegraph:set-webhook --no-interaction \
-    || echo "WARNING: telegraph:set-webhook failed; run it by hand (see telegraph:debug-webhook)" >&2
+if ! php artisan telegraph:set-webhook --no-interaction 2>&1 \
+        | sed -E 's#bot[0-9]+:[A-Za-z0-9_-]+#bot***#g'; then
+    echo "WARNING: telegraph:set-webhook failed; run it by hand (see telegraph:debug-webhook)" >&2
+fi
 
 log "Deployed $(git rev-parse --short HEAD)"
