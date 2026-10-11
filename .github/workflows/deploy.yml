@@ -1,0 +1,111 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Never run two deploys at once; a newer merge waits for the running one.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, gd, intl, zip, exif, bcmath
+          coverage: none
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache/files
+          key: composer-${{ hashFiles('composer.lock') }}
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      # Unit + receipt pipeline. The stock Breeze feature tests target routes
+      # this app no longer has and are known to fail (see CLAUDE.md).
+      - name: Run tests
+        run: php artisan test tests/Unit tests/Feature/Receipt
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Build frontend assets
+        run: |
+          npm ci
+          npm run build
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          if [ -n "$SSH_KNOWN_HOSTS" ]; then
+            printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          else
+            ssh-keyscan -p "$SSH_PORT" "$SSH_HOST" > ~/.ssh/known_hosts
+          fi
+          cat > ~/.ssh/config <<EOF
+          Host deploy-target
+            HostName $SSH_HOST
+            Port $SSH_PORT
+            User ${{ secrets.SSH_USER }}
+            IdentityFile ~/.ssh/id_deploy
+            IdentitiesOnly yes
+          EOF
+
+      # Uploaded without --delete so pages rendered by the old code keep
+      # finding their old hashed files until the new code is live.
+      - name: Upload built assets
+        run: rsync -az public/build/ "deploy-target:${{ secrets.DEPLOY_PATH }}/public/build/"
+
+      - name: Run deploy script on server
+        run: |
+          ssh deploy-target \
+            "cd '${{ secrets.DEPLOY_PATH }}' \
+             && git fetch origin main \
+             && git checkout -q '${{ github.sha }}' -- scripts/deploy.sh \
+             && PHP_BIN='${{ vars.PHP_BIN }}' COMPOSER_BIN='${{ vars.COMPOSER_BIN }}' bash scripts/deploy.sh '${{ github.sha }}'"
+
+      # /up is Laravel's health route (bootstrap/app.php); it returns 200 only
+      # when the app boots, so a broken deploy fails the workflow here.
+      - name: Smoke test
+        env:
+          APP_URL: ${{ vars.APP_URL || 'https://groceapp.codetandem.com' }}
+        run: |
+          for i in 1 2 3 4 5 6; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "$APP_URL/up" || true)
+            echo "Attempt $i: $APP_URL/up -> $code"
+            [ "$code" = "200" ] && exit 0
+            sleep 10
+          done
+          exit 1

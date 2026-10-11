@@ -49,6 +49,21 @@ php artisan wallet:accounts --category=Groceries
 
 The app runs in Docker with MariaDB. The DB host is `db`, user `superuser`. Use `docker-compose up` to start all services (app on :80, phpMyAdmin on :8080).
 
+## Deployment (CI/CD)
+
+`.github/workflows/deploy.yml` runs on every push to `main` (and by hand via *Run workflow*):
+
+1. **test** — PHP 8.4, `php artisan test tests/Unit tests/Feature/Receipt` (the stock Breeze tests are skipped, see Known Issues).
+2. **deploy** (only if tests pass, GitHub environment `production`) — builds Vite assets, rsyncs `public/build/` to the server, runs `scripts/deploy.sh <sha>` over SSH, then smoke-tests `<APP_URL>/up` (repository variable `APP_URL`, default `https://groceapp.codetandem.com`).
+
+Production: https://groceapp.codetandem.com/
+
+`scripts/deploy.sh` runs in the app checkout on the server: maintenance mode → `git reset --hard <sha>` → `composer install --no-dev` → `migrate --force` → `optimize` + `filament:optimize` → `storage:link` → `queue:restart` → up. On failure it brings the app back up. It can also be run by hand: `bash scripts/deploy.sh` deploys `origin/main`.
+
+Repository secrets: `SSH_HOST`, `SSH_USER`, `SSH_PRIVATE_KEY`, `DEPLOY_PATH` (absolute path of the checkout), optional `SSH_PORT` (default 22) and `SSH_KNOWN_HOSTS` (otherwise `ssh-keyscan` is used).
+
+The server is managed by HestiaCP and runs PHP directly (no Docker); deploy as the Hestia user that owns the site (PHP-FPM runs as that user, so no permission fixes are needed). PHP must be 8.4+ to satisfy `composer.lock`. Hestia ships several PHP versions and a per-user Composer, so repository variables `PHP_BIN` (e.g. `/usr/bin/php8.4`) and `COMPOSER_BIN` (e.g. `/home/<user>/.composer/composer`) pin them; the defaults are `php` and `composer` from PATH. Run the queue worker as a Hestia cron job every minute: `cd <DEPLOY_PATH> && /usr/bin/php8.4 artisan queue:work --stop-when-empty --max-time=55`. One-time server setup: clone the repo to `DEPLOY_PATH` with a remote the server can `git fetch` (deploy key), create `.env` (`APP_ENV=production`, `APP_DEBUG=false`, `APP_KEY`, DB, `QUEUE_CONNECTION=database`, …), add the CI public key to the deploy user's `authorized_keys`.
+
 ## Architecture
 
 **Core domain objects:**
