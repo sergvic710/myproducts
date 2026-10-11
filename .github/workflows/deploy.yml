@@ -36,10 +36,20 @@ jobs:
           cp .env.example .env
           php artisan key:generate
 
-      # Unit + receipt pipeline. The stock Breeze feature tests target routes
-      # this app no longer has and are known to fail (see CLAUDE.md).
+      # Unit + every feature suite this app owns. The paths are listed rather
+      # than running the whole directory because the stock Breeze tests
+      # (ExampleTest, ProfileTest, Auth) target routes this app no longer has
+      # and are known to fail — see CLAUDE.md. A new suite has to be added
+      # here or it never runs.
       - name: Run tests
-        run: php artisan test tests/Unit tests/Feature/Receipt
+        run: |
+          php artisan test \
+            tests/Unit \
+            tests/Feature/Receipt \
+            tests/Feature/Shoplist \
+            tests/Feature/Wallet \
+            tests/Feature/CheckHistory \
+            tests/Feature/Dashboard
 
   deploy:
     needs: test
