@@ -65,4 +65,13 @@ php artisan queue:restart
 
 trap - ERR
 php artisan up
+
+# Re-register the Telegram webhook so it always points at this app's current
+# URL. Done after `up` and allowed to fail: the code is already live, and a
+# Telegram outage must not mark a good deploy as broken. Pending updates are
+# kept, so messages sent during maintenance are still delivered.
+log "Registering Telegram webhook"
+php artisan telegraph:set-webhook --no-interaction \
+    || echo "WARNING: telegraph:set-webhook failed; run it by hand (see telegraph:debug-webhook)" >&2
+
 log "Deployed $(git rev-parse --short HEAD)"
