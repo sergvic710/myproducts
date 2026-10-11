@@ -44,6 +44,19 @@ php artisan telegraph:unset-webhook
 
 The app runs in Docker with MariaDB. The DB host is `db`, user `superuser`. Use `docker-compose up` to start all services (app on :80, phpMyAdmin on :8080).
 
+## Deployment (CI/CD)
+
+`.github/workflows/deploy.yml` runs on every push to `main` (and by hand via *Run workflow*):
+
+1. **test** — PHP 8.4, `php artisan test tests/Unit tests/Feature/Receipt` (the stock Breeze tests are skipped, see Known Issues).
+2. **deploy** (only if tests pass, GitHub environment `production`) — builds Vite assets, rsyncs `public/build/` to the server, then runs `scripts/deploy.sh <sha>` over SSH.
+
+`scripts/deploy.sh` runs in the app checkout on the server: maintenance mode → `git reset --hard <sha>` → `composer install --no-dev` → `migrate --force` → `optimize` + `filament:optimize` → `storage:link` → `queue:restart` → up. On failure it brings the app back up. It can also be run by hand: `bash scripts/deploy.sh` deploys `origin/main`.
+
+Repository secrets: `SSH_HOST`, `SSH_USER`, `SSH_PRIVATE_KEY`, `DEPLOY_PATH` (absolute path of the checkout), optional `SSH_PORT` (default 22) and `SSH_KNOWN_HOSTS` (otherwise `ssh-keyscan` is used). Optional repository variable `DEPLOY_EXEC` — a prefix for php/composer when they run in a container, e.g. `docker compose exec -T www`.
+
+One-time server setup: clone the repo to `DEPLOY_PATH` with a remote the server can `git fetch` (deploy key), create `.env` (`APP_ENV=production`, `APP_DEBUG=false`, `APP_KEY`, DB, `QUEUE_CONNECTION=database`, …), add the CI public key to the deploy user's `authorized_keys`, and keep a queue worker running under a supervisor (`php artisan queue:work`) — `queue:restart` only signals workers to reload.
+
 ## Architecture
 
 **Core domain objects:**
