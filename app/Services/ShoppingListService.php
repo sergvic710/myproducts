@@ -9,6 +9,7 @@ use App\DataObjects\ShoppingList;
 use App\Models\Product;
 use App\Models\ProductSnooze;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -166,13 +167,31 @@ final class ShoppingListService
      */
     private function candidates(): array
     {
-        return DB::table('histories')
+        return $this->purchases()
             ->select('product_id')
             ->groupBy('product_id')
             ->havingRaw('COUNT(DISTINCT date) >= ?', [(int) config('shoplist.min_purchases')])
             ->pluck('product_id')
             ->map(static fn ($id): int => (int) $id)
             ->all();
+    }
+
+    /**
+     * Rows that are actually a purchase.
+     *
+     * A basket-wide discount is a line in `histories` like any other — the
+     * parser has to return "Lidl Plus -saastosi" as its own line or the line
+     * totals stop adding up to the receipt. It is not something anybody buys,
+     * though, so it must never be predicted: before this filter it was the
+     * most regular "product" in the shop, due every five days.
+     *
+     * The sign of the total is the discriminator, not `is_discount` — that
+     * flag is also set on a real product with a discount folded into it, and
+     * those are ordinary purchases that have to stay.
+     */
+    private function purchases(): Builder
+    {
+        return DB::table('histories')->where('total', '>', 0);
     }
 
     /**
@@ -185,7 +204,7 @@ final class ShoppingListService
             return [];
         }
 
-        $rows = DB::table('histories')
+        $rows = $this->purchases()
             ->select('product_id', 'date')
             ->whereIn('product_id', $productIds)
             ->whereNotNull('date')
