@@ -131,21 +131,21 @@ class SGroupSyncTest extends TestCase
     }
 
     /**
-     * What the API really answers for a dead session: not a 401, but an error
-     * envelope (HTTP status unknown, so both 400 and 200 are covered).
+     * What the API really answers for a dead session — and for a mangled
+     * sessionId (copied URL-decoded) — is not a 401 but an error envelope.
      */
-    public function test_a_failed_to_get_session_answer_counts_as_expired(): void
+    public function test_session_errors_in_the_envelope_count_as_expired(): void
     {
-        foreach ([400, 200] as $status) {
+        foreach ([[400, 'BAD_REQUEST', 'Failed to get session by id'], [200, 'BAD_REQUEST', 'Failed to get session by id'], [500, 'INTERNAL_ERROR', 'Failed to decrypt the string']] as [$status, $code, $message]) {
             SGroupSession::query()->delete();
             SGroupSession::create(['session_id' => 'old', 'xsrf_token' => 'old']);
 
             Http::fake(['*' => Http::response([
                 'errors' => [[
-                    'code' => 'BAD_REQUEST',
+                    'code' => $code,
                     'field' => null,
                     'fieldErrorCode' => null,
-                    'errorMessage' => 'Failed to get session by id',
+                    'errorMessage' => $message,
                 ]],
                 'correlationId' => 'x',
                 'data' => null,

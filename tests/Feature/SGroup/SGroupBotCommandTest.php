@@ -58,7 +58,7 @@ class SGroupBotCommandTest extends TestCase
         $this->command('/sgroup stale-sid stale-xsrf');
 
         $this->assertNotNull(SGroupSession::sole()->expired_at);
-        Telegraph::assertSent('S-Etukortti did not accept that session. Log in again and send fresh cookies.');
+        Telegraph::assertSent('S-Etukortti did not accept that session.', exact: false);
     }
 
     public function test_without_arguments_it_reports_the_status(): void

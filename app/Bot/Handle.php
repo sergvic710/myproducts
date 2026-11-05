@@ -225,10 +225,22 @@ class Handle extends WebhookHandler
 
         $this->forgetMessage();
 
-        $queued = app(SGroupSync::class)->run();
+        // Inside the webhook: an exception here would make Telegram retry the
+        // whole update, and with it the cookies, so any failure is a reply.
+        try {
+            $queued = app(SGroupSync::class)->run();
+        } catch (Throwable $e) {
+            Log::warning('S-Etukortti sync after /sgroup failed.', ['error' => $e->getMessage()]);
+            $this->chat->message('Session saved, but S-Etukortti did not answer properly: '.$e->getMessage()
+                ."\nI will try again in 15 minutes.")->send();
+
+            return;
+        }
 
         $this->chat->message(match (true) {
-            $queued === null => 'S-Etukortti did not accept that session. Log in again and send fresh cookies.',
+            $queued === null => "S-Etukortti did not accept that session. Log in again and send fresh cookies.\n"
+                .'Copy them from DevTools → Network → a request to api.s-etukortti.fi → Copy as cURL, '
+                .'not URL-decoded from the Cookies panel.',
             $queued === 0 => 'Session saved. No new S-ryhmä receipts — I will keep checking every 15 minutes.',
             default => "Session saved. Importing {$queued} new receipt(s)…",
         })->send();

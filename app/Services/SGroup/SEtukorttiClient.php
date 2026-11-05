@@ -87,6 +87,13 @@ class SEtukorttiClient
         return is_array($json['data'] ?? null) ? $json['data'] : [];
     }
 
+    /**
+     * Two answers mean the stored cookies will never work:
+     * - "Failed to get session by id" (BAD_REQUEST) — the session is gone;
+     * - "Failed to decrypt the string" (INTERNAL_ERROR, HTTP 500) — the
+     *   sessionId value itself is mangled, typically copied URL-decoded from
+     *   DevTools. Retrying either one is pointless; a new login is needed.
+     */
     private function isSessionError(mixed $json): bool
     {
         if (! is_array($json) || ! is_array($json['errors'] ?? null)) {
@@ -94,7 +101,7 @@ class SEtukorttiClient
         }
 
         foreach ($json['errors'] as $error) {
-            if (is_array($error) && preg_match('/\bsession\b/i', (string) ($error['errorMessage'] ?? ''))) {
+            if (is_array($error) && preg_match('/\bsession\b|\bdecrypt/i', (string) ($error['errorMessage'] ?? ''))) {
                 return true;
             }
         }
