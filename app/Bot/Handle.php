@@ -11,6 +11,8 @@ use App\DataObjects\WalletExpense;
 use App\Exceptions\WalletException;
 use App\Jobs\ProcessReceipt;
 use App\Models\History;
+use App\Models\SGroupSession;
+use App\Services\SGroup\SGroupSync;
 use App\Services\ShoppingListService;
 use App\Services\Wallet\BudgetBakersClient;
 use App\Services\Wallet\ReconciliationService;
@@ -25,6 +27,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Stringable;
+use Throwable;
 
 class Handle extends WebhookHandler
 {
@@ -176,6 +179,89 @@ class Handle extends WebhookHandler
         $this->reply('Checking Wallet…');
 
         $this->runCheck($days);
+    }
+
+    /**
+     * Hand the bot an S-Etukortti login, or ask how the sync is doing.
+     *
+     *   /sgroup                          status
+     *   /sgroup <sessionId> <xsrf-token> store a new session and sync now
+     *
+     * The two values are the `sessionId` and `xsrf-token` cookies of a browser
+     * logged in at s-etukortti.fi. They are a working login to the S-ryhmä
+     * account, so the message carrying them is deleted once they are stored.
+     */
+    public function sgroup(string $parameter = ''): void
+    {
+        if (! $this->isKnownChat()) {
+            $this->reply('Unknown command. Send me a receipt as a PDF file or as a photo.');
+
+            return;
+        }
+
+        $parts = preg_split('/\s+/', trim($parameter), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+        if ($parts === []) {
+            $this->chat->message($this->sgroupStatus())->send();
+
+            return;
+        }
+
+        if (count($parts) !== 2) {
+            $this->chat->message(
+                "Send both cookies from s-etukortti.fi, separated by a space:\n/sgroup <sessionId> <xsrf-token>"
+            )->send();
+
+            return;
+        }
+
+        [$sessionId, $xsrf] = $parts;
+
+        SGroupSession::create([
+            'session_id' => $sessionId,
+            'xsrf_token' => $xsrf,
+            'telegraph_chat_id' => $this->chat->id,
+        ]);
+
+        $this->forgetMessage();
+
+        $queued = app(SGroupSync::class)->run();
+
+        $this->chat->message(match (true) {
+            $queued === null => 'S-Etukortti did not accept that session. Log in again and send fresh cookies.',
+            $queued === 0 => 'Session saved. No new S-ryhmä receipts — I will keep checking every 15 minutes.',
+            default => "Session saved. Importing {$queued} new receipt(s)…",
+        })->send();
+    }
+
+    private function sgroupStatus(): string
+    {
+        $session = SGroupSession::latest('id')->first();
+
+        if (! $session) {
+            return "S-Etukortti sync is not set up.\n"
+                ."Log in at s-etukortti.fi, take the sessionId and xsrf-token cookies from the browser, and send:\n"
+                .'/sgroup <sessionId> <xsrf-token>';
+        }
+
+        $last = $session->last_ok_at?->timezone(config('app.timezone'))->format('j M H:i') ?? 'never';
+
+        return $session->expired_at
+            ? "S-Etukortti session expired {$session->expired_at->timezone(config('app.timezone'))->format('j M H:i')} (last worked: {$last}).\nSend /sgroup <sessionId> <xsrf-token> with a fresh login."
+            : "S-Etukortti sync is on. Last successful request: {$last}.";
+    }
+
+    /**
+     * Remove the message that carried the session cookies. A bot may delete
+     * messages in a private chat; if Telegram refuses, say so instead.
+     */
+    private function forgetMessage(): void
+    {
+        try {
+            $this->chat->deleteMessage($this->messageId)->send();
+        } catch (Throwable $e) {
+            $this->chat->message('Saved, but I could not delete your message — please delete it yourself, it contains your login.')->send();
+        }
     }
 
     protected function handleUnknownCommand(Stringable $message): void
