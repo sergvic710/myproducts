@@ -130,6 +130,33 @@ class SGroupSyncTest extends TestCase
         Http::assertSentCount(1);
     }
 
+    /**
+     * What the API really answers for a dead session: not a 401, but an error
+     * envelope (HTTP status unknown, so both 400 and 200 are covered).
+     */
+    public function test_a_failed_to_get_session_answer_counts_as_expired(): void
+    {
+        foreach ([400, 200] as $status) {
+            SGroupSession::query()->delete();
+            SGroupSession::create(['session_id' => 'old', 'xsrf_token' => 'old']);
+
+            Http::fake(['*' => Http::response([
+                'errors' => [[
+                    'code' => 'BAD_REQUEST',
+                    'field' => null,
+                    'fieldErrorCode' => null,
+                    'errorMessage' => 'Failed to get session by id',
+                ]],
+                'correlationId' => 'x',
+                'data' => null,
+                'status' => 'ERROR',
+            ], $status)]);
+
+            $this->assertNull(app(SGroupSync::class)->run(), "HTTP {$status}");
+            $this->assertNotNull(SGroupSession::sole()->expired_at, "HTTP {$status}");
+        }
+    }
+
     public function test_an_unclear_receipt_is_read_by_the_model_instead(): void
     {
         $detail = $this->detail();

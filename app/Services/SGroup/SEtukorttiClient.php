@@ -64,13 +64,19 @@ class SEtukorttiClient
     {
         $response = $this->http()->get(rtrim((string) config('sgroup.base_url'), '/').$path, $query);
 
-        if (in_array($response->status(), [401, 403], true)) {
+        $json = $response->json();
+
+        // A dead session is not a 401: the API answers BAD_REQUEST with
+        // "Failed to get session by id" in the error envelope. Check the
+        // envelope before throw(), or it surfaces as an ordinary failure and
+        // the job retries a login that will never work again.
+        if (in_array($response->status(), [401, 403], true) || $this->isSessionError($json)) {
             throw new SGroupSessionExpiredException(
                 "S-Etukortti refused the session (HTTP {$response->status()})."
             );
         }
 
-        $json = $response->throw()->json();
+        $response->throw();
 
         if (! is_array($json) || ($json['status'] ?? null) !== 'OK' || ! empty($json['errors'])) {
             throw new RuntimeException('S-Etukortti answered with an error: '.json_encode($json['errors'] ?? $json));
@@ -79,6 +85,21 @@ class SEtukorttiClient
         $this->session->forceFill(['last_ok_at' => now()])->save();
 
         return is_array($json['data'] ?? null) ? $json['data'] : [];
+    }
+
+    private function isSessionError(mixed $json): bool
+    {
+        if (! is_array($json) || ! is_array($json['errors'] ?? null)) {
+            return false;
+        }
+
+        foreach ($json['errors'] as $error) {
+            if (is_array($error) && preg_match('/\bsession\b/i', (string) ($error['errorMessage'] ?? ''))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function http(): PendingRequest
