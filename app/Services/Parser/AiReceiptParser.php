@@ -42,6 +42,32 @@ class AiReceiptParser
     {
         $media = $this->mediaFor($filePath);
 
+        return $this->read(
+            fn (array $categories): UserMessage => new UserMessage($this->instruction($categories), [$media]),
+            $filePath,
+        );
+    }
+
+    /**
+     * Read a receipt that is already text — the printed receipt as S-Etukortti
+     * returns it. Same schema, same rules, no file involved. Used as the fallback
+     * when the deterministic S-Etukortti parser meets a line it does not know.
+     */
+    public function parseText(string $text, string $label = 'receipt text'): ParsedReceipt
+    {
+        return $this->read(
+            fn (array $categories): UserMessage => new UserMessage(
+                $this->instruction($categories)."\n\nThe receipt as printed:\n\n```\n{$text}\n```"
+            ),
+            $label,
+        );
+    }
+
+    /**
+     * @param  \Closure(array<int, string>): UserMessage  $message
+     */
+    private function read(\Closure $message, string $label): ParsedReceipt
+    {
         $shops = Shop::orderBy('name')->pluck('name')->all();
         $categories = Category::orderBy('name')->pluck('name')->all();
 
@@ -59,7 +85,7 @@ class AiReceiptParser
             ->using($provider, (string) config('receipts.model'))
             ->withSchema($this->schema($shops, $categories))
             ->withSystemPrompt($this->systemPrompt())
-            ->withMessages([new UserMessage($this->instruction($categories), [$media])])
+            ->withMessages([$message($categories)])
             ->withMaxTokens(16000);
 
         if ($provider === Provider::Anthropic) {
@@ -71,7 +97,7 @@ class AiReceiptParser
         $response = $request->asStructured();
 
         if (empty($response->structured)) {
-            throw ReceiptParseException::emptyResponse($filePath);
+            throw ReceiptParseException::emptyResponse($label);
         }
 
         return ParsedReceipt::fromArray($this->normalizeStructured($response->structured));

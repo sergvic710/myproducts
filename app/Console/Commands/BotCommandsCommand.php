@@ -32,6 +32,7 @@ class BotCommandsCommand extends Command
         'shoplist' => 'What to buy next, from your purchase history',
         'receipt' => 'Send a receipt for me to read',
         'checkhistory' => 'Wallet expenses with no receipt saved',
+        'sgroup' => 'S-ryhmä receipt sync: status, or send a new login',
     ];
 
     public function handle(): int

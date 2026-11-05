@@ -1,0 +1,15 @@
+{
+  "data": {
+    "receipt": {
+      "receiptId": "2195275_64051211",
+      "placeOfBusinessCode": "653462903",
+      "placeOfBusinessName": "S-market Söderkulla",
+      "transactionStart": "2026-10-22T19:20:50+03:00",
+      "totalAmount": 27.95,
+      "receiptData": "\n   OK VARUBODEN-OSLA HLG  y- 2364515-1\n *S-MARKET SÖDERKULLA  puh/tel  0107626520*\n \n                     \n \n   \nK012   M004804/9819   22.10.2026   19:20\n    \nASIAKASOMISTAJAN edut on huomioitu.\n------------------------------------------\n*COOP MANGORAHKA 150G                 1,10 *\n  2 KPL             0,55 €/KPL\n*HAMMASTAHNA CP WHITENING             5,39 *\n*PIPARMINTTU TEE 20PS                 0,95 *\n*COOP MAITOHAPATETTU SUOLAKURKKU      2,89 *\n*PIENET VIHREÄT HERNEET               0,83 *\n*SIIPI NATUREL                        4,09 *\n*BANAANI CHIQUITA                     1,43 *\n  0,761 KG          1,88 €/KG \n*KERMAJUUSTO 1KG                      5,75 *\n*RAEJUUSTO                            1,89 *\n*MONIVILJAPAAHTOLEIPÄ 500G            1,68 *\n*100 % KAURA 6KPL                     1,95 *\n------------------------------------------\n*YHTEENSÄ                            27,95 *\n \nBONUSTA KERRYTTÄVÄT OSTOT    27,95 \n     Jäsennumero ****  **0000\n     Bonustapahtuma 000000000000\n \n \nTID:                  P400Plus-000000000\nCard type:             visastandarddebit\nCard:                               0000\nAID:                      A0000000031010\nEntry mode:             Contactless chip\nCVM res.:             VERIFIED BY DEVICE\n \nAuth. code:                       000000\nReference:\n    00000000-0000-0000-0000-000000000000\nVISA Debit:                      € 27,95\nAPPROVED\n      \nALV         VEROTON     VERO   VEROLLINEN\n5  25,50%      4,29     1,10         5,39\n6  13,50%     19,89     2,67        22,56\nYHTEENSÄ      24,18     3,77        27,95\n   \n \n     HOS OSS FÅR NI BONUS UPP TILL 5%\n        MEILTÄ SAA BONUSTA JOPA 5%\n   *ARK/VARD 6-23 LA/LÖ 6-23 SU/SÖ 9-23*\n                     \n                     \n \n        2195275-012-9819-20261022\n     \n\n"
+    }
+  },
+  "correlationId": "test",
+  "errors": null,
+  "status": "OK"
+}

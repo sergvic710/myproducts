@@ -40,6 +40,10 @@ php artisan telegraph:debug-webhook  # ask Telegram what it sees
 php artisan telegraph:unset-webhook
 php artisan bot:commands             # advertise the commands in the client command menu
 
+# S-ryhmä receipts from S-Etukortti (session comes from the bot: /sgroup)
+php artisan sgroup:sync                          # queue new receipts (scheduled every 15 min)
+php artisan sgroup:sync --from=2025-01-01 --quiet-chat   # backfill without a Telegram message per receipt
+
 # BudgetBakers Wallet
 php artisan wallet:accounts          # list Wallet accounts + check each shop's settings
 php artisan wallet:accounts --category=Groceries
@@ -116,6 +120,16 @@ Setup: generate a personal token at `web.budgetbakers.com/settings/mcp-server` a
 `/checkhistory` gates on the token alone and **ignores `BUDGETBAKERS_ENABLED`**: that flag stops *writing*, and a read is at its most useful precisely when pushing is off.
 
 *Beware `histories.date`* — the migration says `->date()` but the column is a `timestamp` holding midnight, and the model has no cast, so it reads back `"2026-09-09 00:00:00"`. Use `whereDate()` and `substr($v, 0, 10)`; do not "optimise" the grouping into a raw `GROUP BY DATE(...)`, which is MySQL-only and breaks the sqlite suite.
+
+**S-ryhmä receipts from S-Etukortti (`/sgroup`, `sgroup:sync`)** — receipts from Prisma, S-market and the other S-ryhmä shops are fetched from the API behind www.s-etukortti.fi, with no file upload. It is *not* a documented public API: these are the calls the site's own front end makes, authorised by replaying a browser login. It may change or stop without notice.
+
+- *Auth.* Two cookies, `sessionId` (the login) and `xsrf-token`, plus the xsrf value repeated in an `x-csrf-token` header (double-submit CSRF). There is no refresh token: the user logs in at s-etukortti.fi with S-tunnus (one-time email/SMS code) and sends both cookie values to the bot as `/sgroup <sessionId> <xsrf-token>`. They are a working login to the S-ryhmä account, so `sgroup_sessions` stores them with the `encrypted` cast (APP_KEY) and the bot deletes the message that carried them. Only the newest row is used. The cookie's Expires is ~30 minutes, but the server was seen accepting the session after that; how long it really lives is unknown, so a 401/403 marks the row `expired_at` and the chat is told once to send a new login.
+- *Endpoints.* `GET /api/v1/receipts?startDate=&endDate=` (headers only: `receiptId`, `placeOfBusinessName`, `transactionStart` with offset, `totalAmount`) and `GET /api/v1/receipts/{receiptId}`, which adds `receiptData` — the receipt **as printed**, plain text, no EAN. Every answer is wrapped in `{data, status, errors, correlationId}`; anything but `status: OK` is a failure even on HTTP 200.
+- *Pipeline.* `SGroupSync` (scheduled every 15 minutes in `routes/console.php`) lists a month at a time from three days before the newest saved S-Etukortti receipt and queues `ImportSGroupReceipt` per new id. The job fetches the detail and `SGroupReceiptReader` turns it into the same `ParsedReceipt` a PDF becomes, so `ProductRepository::saveReceipt()` and `PushReceiptToWallet` run unchanged.
+- *Reading.* Store, date and total come from the API fields. Line items come from `ReceiptTextParser`, a deterministic reader of the printed layout — but only when it is `certain`: any negative line (a discount, whose owner is a judgement call), any line it cannot place, or lines that do not add up to the total send the text to `AiReceiptParser::parseText()` instead. Categories: a product already in the table keeps its category; only names never seen before go to the model (`ProductCategorizer`, one text request per receipt), and a failed request falls back to `default` rather than failing the receipt.
+- *Shop.* `ShopMatcher` maps "Prisma Itäkeskus" / "S-market Söderkulla" to the shop whose name the store name starts with (case-insensitive, whole word, longest wins). An unknown chain raises `unknownShop`, like the AI parser.
+- *Dedupe.* `filename = s-etukortti:<receiptId>`. The PDFs S-ryhmä hands out are named after the same id (`2195275_63931899.pdf`), so `ImportSGroupReceipt::alreadySaved()` checks both names — exact `whereIn`, not `LIKE`, because the id contains `_` and LIKE escaping differs between MariaDB and sqlite.
+- *Server.* The schedule only runs if cron calls the scheduler. Add a second Hestia cron job every minute: `cd <DEPLOY_PATH> && /usr/bin/php8.4 artisan schedule:run`. Backfill an older range by hand with `php artisan sgroup:sync --from=2025-01-01 --quiet-chat`.
 
 **Analytics** — `app/Services/MetricsService.php` aggregates spending by category for the current month.
 
